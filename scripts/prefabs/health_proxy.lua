@@ -7,8 +7,6 @@ for i, v in ipairs(STIMULI) do
 	STIMULI[v] = i
 end
 
-local AllEpicTargets = {}
-
 local HpWidget = nil
 if not TheNet:IsDedicated() then
 	HpWidget = require "widgets/hp_widget"
@@ -24,11 +22,7 @@ local function netset(netvar, value, force)
 end
 
 local function OnEntityWake(inst)
-	AllEpicTargets[inst._parent] = true
-
 	if ThePlayer ~= nil then
-		ThePlayer:PushEvent("newepictarget", inst._parent)
-
 		if not TheNet:IsDedicated() and inst.hp_widget == nil then
 			inst.hp_widget = ThePlayer.HUD.overlayroot:AddChild(HpWidget(inst))
 			inst.hp_widget:SetTarget(inst._parent)
@@ -38,13 +32,10 @@ local function OnEntityWake(inst)
 end
 
 local function OnEntitySleep(inst)
-	AllEpicTargets[inst._parent] = nil
-
 	if ThePlayer ~= nil then
-		ThePlayer:PushEvent("lostepictarget", inst._parent)
-
 		if not TheNet:IsDedicated() and inst.hp_widget ~= nil then
 			ThePlayer.HUD.overlayroot:RemoveChild(inst.hp_widget)
+			inst.hp_widget:Kill()
 			inst.hp_widget = nil
 		end
 	end
