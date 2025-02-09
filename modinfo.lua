@@ -18,8 +18,8 @@ client_only_mod = false
 
 priority = 0
 
-icon_atlas = "icon.xml"
-icon = "icon.tex"
+-- icon_atlas = "icon.xml"
+-- icon = "icon.tex"
 
 configuration_options =
 {
