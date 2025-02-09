@@ -144,7 +144,7 @@ if TheNet:GetIsServer() then
 	AddComponentPostInit("health", function(self, inst)
 		if inst.health_proxy == nil then
 			inst.health_proxy = inst:SpawnChild("health_proxy")
-			print("Created health proxy for ", inst, ": ", inst.health_proxy)
+			-- print("Created health proxy for ", inst, ": ", inst.health_proxy)
 		end
 	end)
 end

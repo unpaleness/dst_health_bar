@@ -13,7 +13,7 @@ shipwrecked_compatible = false
 hamlet_compatible = false
 dst_compatible = true
 
-all_clients_require_mod = false
+all_clients_require_mod = true
 client_only_mod = false
 
 priority = 0

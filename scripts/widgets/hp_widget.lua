@@ -41,7 +41,6 @@ end
 
 function HpWidget:OnUpdate(dt)
     if self.target ~= nil and self.target:IsValid() then
-	    print("HpWidget:OnUpdate ", self.target, ": ", self.target.components.health.currenthealth)
         local x, y
         if self.target.AnimState ~= nil then
             x, y = TheSim:GetScreenPos(self.target.AnimState:GetSymbolPosition(self.symbol or "", self.offset.x, self.offset.y, self.offset.z))
@@ -52,6 +51,7 @@ function HpWidget:OnUpdate(dt)
         if self.old_hp ~= self.hp then
             self.text:SetString(self.hp)
             self.old_hp = self.hp
+            print("HpWidget:OnUpdate ", self.target, ": ", self.hp)
         end
     end
 end
