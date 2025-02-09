@@ -1,5 +1,5 @@
-name = "Test Mod"
-description = "temp"
+name = "Health indicators"
+description = "Adds health widgets to all entities that have health"
 author = "unpaleness"
 version = "0.0.1"
 
