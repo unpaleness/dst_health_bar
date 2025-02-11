@@ -5,89 +5,100 @@ if not GLOBAL.TheNet:IsDedicated() then
 	HiDamageWidget = require "widgets/hi_damage_widget"
 end
 
-local function HiTryCreateHpWidget(inst)
+-- Client methods
+
+local function HiClientTryCreateHpWidget(inst)
 	if not GLOBAL.TheNet:IsDedicated() and GLOBAL.ThePlayer ~= nil and inst.hi_hp_widget == nil then
 		inst.hi_hp_widget = GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiHpWidget(inst))
-		inst.hi_hp_widget:SetHp(inst._hi_currenthealth:value())
+		inst.hi_hp_widget:SetHp(inst._hi_current_health:value())
 	end
 end
 
-local function HiTryRemoveHpWidget(inst)
+local function HiClientTryRemoveHpWidget(inst)
 	if not GLOBAL.TheNet:IsDedicated() and inst.hi_hp_widget ~= nil then
 		inst.hi_hp_widget:Kill()
 		inst.hi_hp_widget = nil
 	end
 end
 
-local function HiOnHealthCurrentDirty(inst)
-	if inst._hi_currenthealth == nil then
+local function HiClientOnHealthCurrentDirty(inst)
+	if inst._hi_current_health == nil then
 		return
 	end
-	local health = inst._hi_currenthealth:value()
+	local health = inst._hi_current_health:value()
 	if health <= 0 then
-		HiTryRemoveHpWidget(inst)
+		HiClientTryRemoveHpWidget(inst)
 		return
 	end
-	HiTryCreateHpWidget(inst)
 	if inst.hi_hp_widget ~= nil then
-		inst.hi_hp_widget:SetHp(inst._hi_currenthealth:value())
+		inst.hi_hp_widget:SetHp(inst._hi_current_health:value())
 	end
 end
 
-local function HiOnHealthDelta(inst, data)
-	local health = inst.components.health
-    if health == nil then
-		print("HiOnHealthDelta: {", inst, "} have no \"health\" component")
+local function HiClientOnDamageCurrentDirty(inst)
+	if inst._hi_current_damage == nil then
 		return
 	end
-	inst._hi_currenthealth:set(health.currenthealth * data.newpercent)
-	print("HiOnHealthDelta: {", inst, "} new _hi_currenthealth value: ", inst._hi_currenthealth:value())
+	if not GLOBAL.TheNet:IsDedicated() and GLOBAL.ThePlayer ~= nil then
+		GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiDamageWidget(inst, inst._hi_current_damage:value()))
+	end
 end
 
--- local function HiOnEntityWake(inst)
--- 	print("HiOnEntityWake: {", inst, "}")
--- 	if not GLOBAL.TheNet:IsDedicated() then
--- 		HiTryCreateHpWidget(inst)
--- 	end
--- end
+local function HiClientOnEntityActive(inst)
+	-- print("HiClientOnEntityActive: {", inst, "}")
+	if inst:IsAsleep() then
+		return
+	end
+	if inst.entity:HasTag("INLIMBO") then
+		return
+	end
+	if inst._hi_current_health ~= nil and inst._hi_current_health:value() > 0 then
+		HiClientTryCreateHpWidget(inst)
+	end
+end
 
--- local function HiOnEntitySleep(inst)
--- 	print("HiOnEntitySleep: {", inst, "}")
--- 	HiTryRemoveHpWidget(inst)
--- end
+local function HiClientOnEntityPassive(inst)
+	-- print("HiClientOnEntityPassive: {", inst, "}")
+	HiClientTryRemoveHpWidget(inst)
+end
 
--- AddComponentPostInit("health", function(self, inst)
--- 	if GLOBAL.TheWorld.ismastersim then
--- 		if inst._hi_currenthealth ~= nil then -- already initialized
--- 			return
--- 		end
--- 		-- inst.entity:AddNetwork()
--- 		inst._hi_currenthealth = GLOBAL.net_float(inst.GUID, "components.health._hi_currenthealth", "hi_on_currenthealth_dirty")
--- 		inst._hi_currenthealth:set(inst.components.health.currenthealth)
--- 		inst:ListenForEvent("healthdelta", HiOnHealthDelta)
--- 	end
--- end)
+-- Server methods
+
+local function HiServerOnHealthDelta(inst, data)
+	local health_component = inst.components.health
+    if health_component == nil then
+		-- print("HiServerOnHealthDelta: {", inst, "} have no \"health_component\" component")
+		return
+	end
+	inst._hi_current_health:set(health_component.currenthealth)
+	inst._hi_current_damage:set_local(data.amount)
+	inst._hi_current_damage:set(data.amount)
+	-- print("HiServerOnHealthDelta: {", inst, "} new _hi_current_health value: ", inst._hi_current_health:value())
+end
+
+-- Subscription on all prefabs initialization. Here we create network variables, make subscriptions on events
 
 AddPrefabPostInitAny(function(inst)
-	print("AddPrefabPostInitAny: {", inst, "}: Start")
-	inst._hi_currenthealth = GLOBAL.net_float(inst.GUID, "components.health._hi_currenthealth", "hi_on_currenthealth_dirty")
+	-- print("AddPrefabPostInitAny: {", inst, "}: Start")
+	inst._hi_current_health = GLOBAL.net_float(inst.GUID, "components.health._hi_current_health", "hi_on_current_health_dirty")
+	inst._hi_current_damage = GLOBAL.net_float(inst.GUID, "components.health._hi_current_damage", "hi_on_current_damage_dirty")
 	local health_component = inst.components.health
 	if health_component ~= nil then
-		inst._hi_currenthealth:set(health_component.currenthealth)
+		inst._hi_current_health:set(health_component.currenthealth)
 	end
 	if GLOBAL.TheWorld.ismastersim then
-		print("AddPrefabPostInitAny: {", inst, "}: setting up server subscriptions")
-		inst:ListenForEvent("healthdelta", HiOnHealthDelta)
+		-- print("AddPrefabPostInitAny: {", inst, "}: setting up server subscriptions")
+		inst:ListenForEvent("healthdelta", HiServerOnHealthDelta)
 	end
 	if not GLOBAL.TheNet:IsDedicated() then
-		print("AddPrefabPostInitAny: {", inst, "}: setting up client subscriptions")
-		-- inst:ListenForEvent("entitywake", HiOnEntityWake)
-		-- inst:ListenForEvent("entitysleep", HiOnEntitySleep)
-		-- inst:ListenForEvent("onremove", HiOnEntitySleep)
-		-- if not inst:IsAsleep() then
-		-- 	HiOnEntityWake(inst)
-		-- end
-		inst:ListenForEvent("hi_on_currenthealth_dirty", HiOnHealthCurrentDirty)
-		HiOnHealthCurrentDirty(inst)
+		-- print("AddPrefabPostInitAny: {", inst, "}: setting up client subscriptions")
+		inst:ListenForEvent("exitlimbo", HiClientOnEntityActive)
+		inst:ListenForEvent("entitywake", HiClientOnEntityActive)
+		inst:ListenForEvent("enterlimbo", HiClientOnEntityPassive)
+		inst:ListenForEvent("entitysleep", HiClientOnEntityPassive)
+		inst:ListenForEvent("onremove", HiClientOnEntityPassive)
+		HiClientOnEntityActive(inst)
+		inst:ListenForEvent("hi_on_current_health_dirty", HiClientOnHealthCurrentDirty)
+		inst:ListenForEvent("hi_on_current_damage_dirty", HiClientOnDamageCurrentDirty)
 	end
 end)

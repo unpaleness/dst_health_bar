@@ -26,7 +26,7 @@ function HiBaseWidget:GetScreenOffset()
 end
 
 function HiBaseWidget:OnUpdate(dt)
-    if self.owner ~= nil and self.owner:IsValid() then
+    if self.owner ~= nil and self.owner:IsValid() and self.owner.Transform ~= nil then
         local x, y = TheSim:GetScreenPos(self.owner.Transform:GetWorldPosition())
         local pos = Vector3(x, y, 0)
         self:SetPosition(pos + self.screen_offset + self.offset)
