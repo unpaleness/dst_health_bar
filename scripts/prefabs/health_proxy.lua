@@ -8,8 +8,10 @@ for i, v in ipairs(STIMULI) do
 end
 
 local HpWidget = nil
+local DamageWidget = nil
 if not TheNet:IsDedicated() then
 	HpWidget = require "widgets/hp_widget"
+	DamageWidget = require "widgets/damage_widget"
 end
 
 local function netset(netvar, value, force)
@@ -21,29 +23,27 @@ local function netset(netvar, value, force)
 	end
 end
 
+local function RemoveHpWidget(inst)
+	if not TheNet:IsDedicated() and inst ~= nil and inst.hp_widget ~= nil then
+		inst.hp_widget:Kill()
+		inst.hp_widget = nil
+	end
+end
+
 local function OnEntityWake(inst)
-	if ThePlayer ~= nil then
-		if not TheNet:IsDedicated() and inst.hp_widget == nil then
-			inst.hp_widget = ThePlayer.HUD.overlayroot:AddChild(HpWidget(inst))
-			inst.hp_widget:SetTarget(inst._parent)
-			inst.hp_widget:SetHP(inst.currenthealth)
-		end
+	if not TheNet:IsDedicated() and ThePlayer ~= nil and inst ~= nil and inst.hp_widget == nil then
+		inst.hp_widget = ThePlayer.HUD.overlayroot:AddChild(HpWidget(inst._parent))
+		-- inst.hp_widget:SetTarget(inst._parent)
+		inst.hp_widget:SetHP(inst.currenthealth)
 	end
 end
 
 local function OnEntitySleep(inst)
-	if ThePlayer ~= nil then
-		if not TheNet:IsDedicated() and inst.hp_widget ~= nil then
-			ThePlayer.HUD.overlayroot:RemoveChild(inst.hp_widget)
-			inst.hp_widget:Kill()
-			inst.hp_widget = nil
-		end
-	end
+	RemoveHpWidget(inst)
 end
 
 local function OnCurrentHealthDirty(inst)
 	inst.currenthealth = inst._currenthealth:value() / PRECISION
-	print("OnCurrentHealthDirty ", inst, ": ", inst.currenthealth)
 	if inst.hp_widget ~= nil then
 		inst.hp_widget:SetHP(inst.currenthealth)
 	end
@@ -51,7 +51,6 @@ end
 
 local function OnMaxHealthDirty(inst)
 	inst.maxhealth = inst._maxhealth:value() / PRECISION
-	print("OnMaxHealthDirty ", inst, ": ", inst.maxhealth)
 end
 
 local function OnInvincibleDirty(inst)
@@ -73,15 +72,27 @@ local function OnDamaged(inst)
 end
 
 local function OnHealthDelta(parent, data)
-	if parent.components.health ~= nil then
+	local health = parent.components.health
+	if health ~= nil then
 		if data ~= nil and data.newpercent <= 0 and data.oldpercent > 0 then
-			local damageresolved = data.oldpercent * parent.components.health.maxhealth + math.max(-999999, data.amount)
+			local damageresolved = data.oldpercent * health.maxhealth + math.max(-999999, data.amount)
 			netset(parent.health_proxy._currenthealth, math.ceil(damageresolved * PRECISION))
 			netset(parent.health_proxy._stimuli, not data.cause and STIMULI.health or 0)
 		else
-			netset(parent.health_proxy._currenthealth, math.ceil(parent.components.health.currenthealth * PRECISION))
-			netset(parent.health_proxy._maxhealth, math.ceil(parent.components.health.maxhealth * PRECISION))
+			netset(parent.health_proxy._currenthealth, math.ceil(health.currenthealth * PRECISION))
+			netset(parent.health_proxy._maxhealth, math.ceil(health.maxhealth * PRECISION))
 			netset(parent.health_proxy._stimuli, 0)
+		end
+		if data ~= nil then
+			-- check that hp was > 0 before hit as we don't want to show indicator on dead entities
+			local was_hp = data.newpercent > 0 or data.oldpercent > 0
+			if not TheNet:IsDedicated() and data ~= nil and data.amount ~= 0 and was_hp then
+				local damage_widget = ThePlayer.HUD.overlayroot:AddChild(DamageWidget(parent))
+				damage_widget:SetHP(data.amount)
+			end
+			if data.newpercent <= 0 then
+				RemoveHpWidget(parent.health_proxy)
+			end
 		end
 	end
 end

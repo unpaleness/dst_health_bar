@@ -148,24 +148,3 @@ if TheNet:GetIsServer() then
 		end
 	end)
 end
-
--- Client only methods
-if not TheNet:IsDedicated() then
-	postinitfns.ControlsPostInit = {}
-
-	function AddControlsPostInit(fn)
-		table.insert(postinitfns.ControlsPostInit, fn)
-	end
-
-	AddSimPostInit(function()
-		AddClassPostConstruct("widgets/controls", function(...)
-			for i, v in ipairs(postinitfns.ControlsPostInit) do v(...) end
-		end)
-	end)
-
-	-- AddControlsPostInit(function(self, owner)
-	-- local HpWidget = require "widgets/hpwidget"
-	-- self.hpwidget = self.top_root:AddChild(HpWidget(owner))
-	-- self.hpwidget:SetPosition(0, 0)
-	-- end)
-end
