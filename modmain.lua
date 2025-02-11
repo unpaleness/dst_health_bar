@@ -1,150 +1,93 @@
--- Init started
-
-for i, v in ipairs({ "_G", "setmetatable", "rawget" }) do
-	env[v] = GLOBAL[v]
+local HiHpWidget = nil
+local HiDamageWidget = nil
+if not GLOBAL.TheNet:IsDedicated() then
+	HiHpWidget = require "widgets/hi_hp_widget"
+	HiDamageWidget = require "widgets/hi_damage_widget"
 end
 
-setmetatable(env,
-{
-	__index = function(table, key) return rawget(_G, key) end
-})
-
-modpath = package.path:match("([^;]+)")
-package.path = package.path:sub(#modpath + 2) .. ";" .. modpath
-
---\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-PrefabFiles = {}
-Assets = {}
-
---\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-local mem = setmetatable({}, { __mode = "v" })
-local function argtohash(...) local str = ""; for i, v in ipairs(arg) do str = str .. tostring(v) end; return hash(str) end
-local function memget(...) return mem[argtohash(...)] end
-local function memset(value, ...) mem[argtohash(...)] = value end
-
-GlobalNS =
-{
-	Dummy = function() end,
-	True = function() return true end,
-	ClampRemap = function(v, ...) return Remap(Clamp(v, ...), ...) end,
-
-	Parallel = function(root, key, fn, lowprio)
-		if type(root) == "table" then
-			local oldfn = root[key]
-			local newfn = oldfn and memget("PARALLEL", oldfn, fn)
-			if not oldfn or newfn then
-				root[key] = newfn or fn
-			else
-				if lowprio then
-					root[key] = function(...) oldfn(...) return fn(...) end
-				else
-					root[key] = function(...) fn(...) return oldfn(...) end
-				end
-				memset(root[key], "PARALLEL", oldfn, fn)
-			end
-		end
-	end,
-
-	Sequence = function(root, key, fn, noselect)
-		if type(root) == "table" then
-			local oldfn = root[key] or GlobalNS.Dummy
-			local newfn = memget("SEQUENCE", oldfn, fn)
-			if newfn then
-				root[key] = newfn
-			else
-				root[key] = function(...)
-					local ret = { oldfn(...) }
-					for i, v in pairs({ fn(ret[1], ...) }) do
-						ret[i] = v
-					end
-					return unpack(ret)
-				end
-				memset(root[key], "SEQUENCE", oldfn, fn)
-			end
-		end
-	end,
-
-	Branch = function(root, key, fn)
-		if type(root) == "table" then
-			local oldfn = root[key]
-			if oldfn then
-				local newfn = memget("BRANCH", oldfn, fn)
-				if newfn then
-					root[key] = newfn
-				else
-					root[key] = function(...) return fn(oldfn, ...) end
-					memset(root[key], "BRANCH", oldfn, fn)
-				end
-			end
-		end
-	end,
-
-	GetUpvalue = function(fn, ...)
-		local prevfn, i
-		for _, name in ipairs(arg) do
-			for _i = 1, math.huge do
-				local _name, _upvalue = debug.getupvalue(fn, _i)
-				if _upvalue == nil then
-					return
-				elseif _name == name then
-					fn, i, prevfn = _upvalue, _i, fn
-					break
-				end
-			end
-		end
-		return fn, i, prevfn
-	end,
-
-	BranchUpvalue = function(fn, ...)
-		local upvalue = table.remove(arg)
-		local fn, i, prevfn = GlobalNS.GetUpvalue(fn, unpack(arg))
-		if type(fn) ~= "function" then
-			debug.setupvalue(prevfn, i, upvalue(fn))
-		else
-			debug.setupvalue(prevfn, i, function(...) return upvalue(fn, ...) end)
-		end
-	end,
-
-	Browse = function(table, ...)
-		for i, v in ipairs(arg) do
-			if type(table) ~= "table" then
-				return
-			end
-			table = table[v]
-		end
-		return table
-	end,
-
-	OnEntityReplicated = function(inst, fn, lowprio)
-		if TheWorld.ismastersim or inst.Network == nil then
-			StartThread(fn, inst.GUID, inst)
-		else
-			GlobalNS.Parallel(inst, "OnEntityReplicated", fn, lowprio)
-		end
-	end,
-}
-
-if rawget(_G, "GlobalNS") == nil then
-	rawset(_G, "GlobalNS", GlobalNS)
-else
-	for name, data in pairs(GlobalNS) do
-		_G["GlobalNS"][name] = data
+local function HiTryCreateHpWidget(inst)
+	if not GLOBAL.TheNet:IsDedicated() and GLOBAL.ThePlayer ~= nil and inst.hi_hp_widget == nil then
+		inst.hi_hp_widget = GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiHpWidget(inst))
+		inst.hi_hp_widget:SetHp(inst._hi_currenthealth:value())
 	end
-	GlobalNS = _G["GlobalNS"]
 end
 
--- Init ended
-
-table.insert(PrefabFiles, "health_proxy")
-
--- Server only methods
-if TheNet:GetIsServer() then
-	AddComponentPostInit("health", function(self, inst)
-		if inst.health_proxy == nil then
-			inst.health_proxy = inst:SpawnChild("health_proxy")
-			-- print("Created health proxy for ", inst, ": ", inst.health_proxy)
-		end
-	end)
+local function HiTryRemoveHpWidget(inst)
+	if not GLOBAL.TheNet:IsDedicated() and inst.hi_hp_widget ~= nil then
+		inst.hi_hp_widget:Kill()
+		inst.hi_hp_widget = nil
+	end
 end
+
+local function HiOnHealthCurrentDirty(inst)
+	if inst._hi_currenthealth == nil then
+		return
+	end
+	local health = inst._hi_currenthealth:value()
+	if health <= 0 then
+		HiTryRemoveHpWidget(inst)
+		return
+	end
+	HiTryCreateHpWidget(inst)
+	if inst.hi_hp_widget ~= nil then
+		inst.hi_hp_widget:SetHp(inst._hi_currenthealth:value())
+	end
+end
+
+local function HiOnHealthDelta(inst, data)
+	local health = inst.components.health
+    if health == nil then
+		print("HiOnHealthDelta: {", inst, "} have no \"health\" component")
+		return
+	end
+	inst._hi_currenthealth:set(health.currenthealth * data.newpercent)
+	print("HiOnHealthDelta: {", inst, "} new _hi_currenthealth value: ", inst._hi_currenthealth:value())
+end
+
+-- local function HiOnEntityWake(inst)
+-- 	print("HiOnEntityWake: {", inst, "}")
+-- 	if not GLOBAL.TheNet:IsDedicated() then
+-- 		HiTryCreateHpWidget(inst)
+-- 	end
+-- end
+
+-- local function HiOnEntitySleep(inst)
+-- 	print("HiOnEntitySleep: {", inst, "}")
+-- 	HiTryRemoveHpWidget(inst)
+-- end
+
+-- AddComponentPostInit("health", function(self, inst)
+-- 	if GLOBAL.TheWorld.ismastersim then
+-- 		if inst._hi_currenthealth ~= nil then -- already initialized
+-- 			return
+-- 		end
+-- 		-- inst.entity:AddNetwork()
+-- 		inst._hi_currenthealth = GLOBAL.net_float(inst.GUID, "components.health._hi_currenthealth", "hi_on_currenthealth_dirty")
+-- 		inst._hi_currenthealth:set(inst.components.health.currenthealth)
+-- 		inst:ListenForEvent("healthdelta", HiOnHealthDelta)
+-- 	end
+-- end)
+
+AddPrefabPostInitAny(function(inst)
+	print("AddPrefabPostInitAny: {", inst, "}: Start")
+	inst._hi_currenthealth = GLOBAL.net_float(inst.GUID, "components.health._hi_currenthealth", "hi_on_currenthealth_dirty")
+	local health_component = inst.components.health
+	if health_component ~= nil then
+		inst._hi_currenthealth:set(health_component.currenthealth)
+	end
+	if GLOBAL.TheWorld.ismastersim then
+		print("AddPrefabPostInitAny: {", inst, "}: setting up server subscriptions")
+		inst:ListenForEvent("healthdelta", HiOnHealthDelta)
+	end
+	if not GLOBAL.TheNet:IsDedicated() then
+		print("AddPrefabPostInitAny: {", inst, "}: setting up client subscriptions")
+		-- inst:ListenForEvent("entitywake", HiOnEntityWake)
+		-- inst:ListenForEvent("entitysleep", HiOnEntitySleep)
+		-- inst:ListenForEvent("onremove", HiOnEntitySleep)
+		-- if not inst:IsAsleep() then
+		-- 	HiOnEntityWake(inst)
+		-- end
+		inst:ListenForEvent("hi_on_currenthealth_dirty", HiOnHealthCurrentDirty)
+		HiOnHealthCurrentDirty(inst)
+	end
+end)

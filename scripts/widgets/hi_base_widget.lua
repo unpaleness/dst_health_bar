@@ -1,7 +1,7 @@
 local Widget = require "widgets/widget"
 
-local BaseWidget = Class(Widget, function(self, owner)
-    Widget._ctor(self, "BaseWidget")
+local HiBaseWidget = Class(Widget, function(self, owner)
+    Widget._ctor(self, "HiBaseWidget")
 	self.owner = owner
     self.offset = Vector3(0, 0, 0)
     self.screen_offset = Vector3(0, 0, 0)
@@ -10,22 +10,22 @@ local BaseWidget = Class(Widget, function(self, owner)
     self:StartUpdating()
 end)
 
-function BaseWidget:SetOffset(offset)
+function HiBaseWidget:SetOffset(offset)
     self.offset = offset
     self:OnUpdate(0)
 end
 
-function BaseWidget:SetScreenOffset(x,y)
+function HiBaseWidget:SetScreenOffset(x,y)
     self.screen_offset.x = x
     self.screen_offset.y = y
     self:OnUpdate(0)
 end
 
-function BaseWidget:GetScreenOffset()
+function HiBaseWidget:GetScreenOffset()
     return self.screen_offset.x, self.screen_offset.y
 end
 
-function BaseWidget:OnUpdate(dt)
+function HiBaseWidget:OnUpdate(dt)
     if self.owner ~= nil and self.owner:IsValid() then
         local x, y = TheSim:GetScreenPos(self.owner.Transform:GetWorldPosition())
         local pos = Vector3(x, y, 0)
@@ -33,4 +33,4 @@ function BaseWidget:OnUpdate(dt)
     end
 end
 
-return BaseWidget
+return HiBaseWidget
