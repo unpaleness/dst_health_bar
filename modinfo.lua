@@ -1,7 +1,7 @@
 name = "Health indicators"
 description = "Adds health widgets to all entities that have health"
 author = "unpaleness"
-version = "0.0.1"
+version = "0.0.2"
 
 forumthread = ""
 
