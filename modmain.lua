@@ -9,8 +9,7 @@ end
 
 local function HiClientTryCreateHpWidget(inst)
 	if not GLOBAL.TheNet:IsDedicated() and GLOBAL.ThePlayer ~= nil and inst.hi_hp_widget == nil then
-		inst.hi_hp_widget = GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiHpWidget(inst))
-		inst.hi_hp_widget:SetHp(inst._hi_current_health:value())
+		inst.hi_hp_widget = GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiHpWidget(inst, inst._hi_current_health:value()))
 	end
 end
 
@@ -22,25 +21,16 @@ local function HiClientTryRemoveHpWidget(inst)
 end
 
 local function HiClientOnHealthCurrentDirty(inst)
-	if inst._hi_current_health == nil then
-		return
-	end
-	local health = inst._hi_current_health:value()
-	if health <= 0 then
-		HiClientTryRemoveHpWidget(inst)
-		return
+	local health_value = inst._hi_current_health:value()
+	if health_value > 0 and inst.hi_hp_widget == nil then
+		HiClientTryCreateHpWidget(inst)
 	end
 	if inst.hi_hp_widget ~= nil then
-		inst.hi_hp_widget:SetHp(inst._hi_current_health:value())
+		inst.hi_hp_widget:SetHp(health_value)
 	end
-end
-
-local function HiClientOnDamageCurrentDirty(inst)
-	if inst._hi_current_damage == nil then
+	if health_value <= 0 then
+		HiClientTryRemoveHpWidget(inst)
 		return
-	end
-	if not GLOBAL.TheNet:IsDedicated() and GLOBAL.ThePlayer ~= nil then
-		GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiDamageWidget(inst, inst._hi_current_damage:value()))
 	end
 end
 
@@ -71,8 +61,6 @@ local function HiServerOnHealthDelta(inst, data)
 		return
 	end
 	inst._hi_current_health:set(health_component.currenthealth)
-	inst._hi_current_damage:set_local(data.amount)
-	inst._hi_current_damage:set(data.amount)
 	-- print("HiServerOnHealthDelta: {", inst, "} new _hi_current_health value: ", inst._hi_current_health:value())
 end
 
@@ -81,7 +69,6 @@ end
 AddPrefabPostInitAny(function(inst)
 	-- print("AddPrefabPostInitAny: {", inst, "}: Start")
 	inst._hi_current_health = GLOBAL.net_float(inst.GUID, "components.health._hi_current_health", "hi_on_current_health_dirty")
-	inst._hi_current_damage = GLOBAL.net_float(inst.GUID, "components.health._hi_current_damage", "hi_on_current_damage_dirty")
 	local health_component = inst.components.health
 	if health_component ~= nil then
 		inst._hi_current_health:set(health_component.currenthealth)
@@ -99,6 +86,6 @@ AddPrefabPostInitAny(function(inst)
 		inst:ListenForEvent("onremove", HiClientOnEntityPassive)
 		HiClientOnEntityActive(inst)
 		inst:ListenForEvent("hi_on_current_health_dirty", HiClientOnHealthCurrentDirty)
-		inst:ListenForEvent("hi_on_current_damage_dirty", HiClientOnDamageCurrentDirty)
+		-- inst:ListenForEvent("hi_on_current_damage_dirty", HiClientOnDamageCurrentDirty)
 	end
 end)

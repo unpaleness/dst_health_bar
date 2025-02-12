@@ -1,7 +1,7 @@
 name = "Health indicators"
-description = "Adds health widgets to all entities that have health"
+description = "A very base health and damage indicators. May be unstable and glitchy for now."
 author = "unpaleness"
-version = "0.0.2"
+version = "0.0.3"
 
 forumthread = ""
 
@@ -18,27 +18,18 @@ client_only_mod = false
 
 priority = 0
 
--- icon_atlas = "icon.xml"
--- icon = "icon.tex"
+icon_atlas = "images/icon.xml"
+icon = "icon.tex"
 
 configuration_options =
 {
-	-- This is an "empty" setting, which functions as a headline for the coming settings.
-	{
-		name 	= "",
-		label 	= "General Settings",
-		options =	{
-						{description = "", data = 0},
-					},
-		default = 0,
-	},
-	{
-		name = "show_hp",
-		label = "Show HP",
-		options =	{
-						{description = "Yes", data = true},
-						{description = "No", data = false},
-					},
-		default = true,
-	},
+	-- {
+	-- 	name = "show_hp",
+	-- 	label = "Show HP",
+	-- 	options =	{
+	-- 					{description = "Yes", data = true},
+	-- 					{description = "No", data = false},
+	-- 				},
+	-- 	default = true,
+	-- },
 }

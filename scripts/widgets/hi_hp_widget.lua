@@ -1,25 +1,29 @@
 local Text = require "widgets/text"
 local HiBaseWidget = require "widgets/hi_base_widget"
+local HiDamageWidget = require "widgets/hi_damage_widget"
 
-local HiHpWidget = Class(HiBaseWidget, function(self, owner)
+local HiHpWidget = Class(HiBaseWidget, function(self, owner, hp)
     HiBaseWidget._ctor(self, "HiHpWidget")
 	self.owner = owner
-    self.text = self:AddChild(Text(TALKINGFONT, 40, "", {0, 1, 0, 1}))
     self.old_hp = 0
-    self.hp = 0
+    self.hp = hp
+    self.offset = Vector3(0, -20, 0)
+    self.text = self:AddChild(Text(BODYTEXTFONT, 40, math.floor(self.hp), {1, 1, 1, 1}))
 end)
 
 function HiHpWidget:SetHp(new_hp)
+    self.old_hp = self.hp
     self.hp = new_hp or 0
-    self:OnUpdate(0)
+    if self.old_hp ~= self.hp then
+        self.text:SetString(math.floor(self.hp))
+        if not TheNet:IsDedicated() and ThePlayer ~= nil then
+            ThePlayer.HUD.overlayroot:AddChild(HiDamageWidget(self.owner, self.hp - self.old_hp))
+        end
+    end
 end
 
 function HiHpWidget:OnUpdate(dt)
     HiBaseWidget.OnUpdate(self, dt)
-    if self.old_hp ~= self.hp then
-        self.text:SetString(math.floor(self.hp))
-        self.old_hp = self.hp
-    end
 end
 
 return HiHpWidget
