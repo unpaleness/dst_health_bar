@@ -1,7 +1,7 @@
 name = "Health indicators"
 description = "A very base health and damage indicators. May be unstable and glitchy for now."
 author = "unpaleness"
-version = "0.0.3"
+version = "0.0.4"
 
 forumthread = ""
 
