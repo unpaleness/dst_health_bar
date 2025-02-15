@@ -26,12 +26,13 @@ local function GetHpWidgetState(target)
     if target:HasTag("player") then
         return STATE_PLAYER
     end
+    local player_id = ThePlayer.userid
     local follow_target_value = target._hi_follow_target_replicated:value()
-    if follow_target_value == ThePlayer.GUID or target:HasTag("companion") then
+    if follow_target_value == player_id or target:HasTag("companion") then
         return STATE_FRIEND
     end
-    local combat_target_value = target._hi_combat_target_repicated:value()
-    if combat_target_value == ThePlayer.GUID then
+    local combat_target_value = target._hi_combat_target_replicated:value()
+    if combat_target_value == player_id then
         return STATE_HOSTILE
     end
 
@@ -50,6 +51,11 @@ local HiHpWidget = Class(HiBaseWidget, function(self, hp, max_hp)
     self:UpdateHp(hp, max_hp)
     self:UpdateWhilePaused(false)
 end)
+
+function HiHpWidget:SetTarget(target)
+    HiBaseWidget.SetTarget(self, target)
+    self:UpdateState()
+end
 
 function HiHpWidget:Kill()
     self.image_bg:Kill()
@@ -81,8 +87,7 @@ function HiHpWidget:UpdateHp(hp, max_hp)
     end
 end
 
-function HiHpWidget:OnUpdate(dt)
-    HiBaseWidget.OnUpdate(self, dt)
+function HiHpWidget:UpdateState()
     local state = GetHpWidgetState(self.target)
     if state ~= self.state then
         self.state = state

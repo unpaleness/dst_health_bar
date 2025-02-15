@@ -91,6 +91,20 @@ local function HiClientOnHealthDirty(inst)
     end
 end
 
+local function HiClientOnCombatTargetDirty(inst)
+	local hp_widget = inst._hi_hp_widget
+	if hp_widget ~= nil then
+		hp_widget:UpdateState()
+	end
+end
+
+local function HiClientOnFollowTargetDirty(inst)
+	local hp_widget = inst._hi_hp_widget
+	if hp_widget ~= nil then
+		hp_widget:UpdateState()
+	end
+end
+
 --[[
 local function HiClientOnCombinedDamageStringDirty(inst)
 	local combined_damage_string_replicated = inst._hi_combined_damage_string:value()
@@ -159,20 +173,22 @@ end
 local function HiServerOnHealthDelta(inst, data)
     local health_component = inst.components.health
     if health_component == nil then
-        print("HiServerOnHealthDelta: {", inst, "} have no \"health_component\" component")
+        -- print("HiServerOnHealthDelta: {", inst, "} have no \"health_component\" component")
         return
     end
     inst._hi_current_health_replicated:set(health_component.currenthealth)
 end
 
 local function HiServerOnStartFollowing(inst, data)
-	print("HiServerOnStartFollowing {", inst, "}: ", data.leader)
-	inst._hi_follow_target_replicated:set(data.leader.GUID)
+	-- print("HiServerOnStartFollowing {", inst, "}: ", data.leader)
+	local leader = data.leader
+	local is_new_target_player = leader and leader:HasTag("player") or false
+	inst._hi_follow_target_replicated:set(is_new_target_player and leader.userid or "")
 end
 
 local function HiServerOnStopFollowing(inst, data)
-	print("HiServerOnStopFollowing {", inst, "}: ", data.leader)
-	inst._hi_follow_target_replicated:set(0)
+	-- print("HiServerOnStopFollowing {", inst, "}: ", data.leader)
+	inst._hi_follow_target_replicated:set("")
 end
 
 --[[
@@ -194,52 +210,61 @@ local function HiServerOnAttacked(inst, data)
 end
 ]]
 
+local function HiServerProcessHealthComponent(health)
+	health.inst._hi_current_health_replicated:set(health.currenthealth)
+	health.inst._hi_max_health_replicated:set(health.maxhealth)
+	local OldSetMaxHealth = health.SetMaxHealth
+	health.SetMaxHealth = function(self, amount)
+		OldSetMaxHealth(self, amount)
+		health.inst._hi_max_health_replicated:set(amount)
+	end
+end
+
+local function HiServerProcessCombat(combat)
+	local function OnChangeTarget(component, old_target, new_target)
+		local is_old_target_player = old_target and old_target:HasTag("player") or false
+		local is_new_target_player = new_target and new_target:HasTag("player") or false
+		if old_target ~= new_target and (is_old_target_player or is_new_target_player) then
+			-- print("ChangeTarget {", component.inst, "}: old: ", old_target and old_target or "<nil>", ", new: ", new_target and new_target or "<nil>")
+			component.inst._hi_combat_target_replicated:set(is_new_target_player and new_target.userid or "")
+		end
+	end
+	local OldEngageTarget = combat.EngageTarget
+	combat.EngageTarget = function(self, target)
+		local old_target = self.target
+		OldEngageTarget(self, target)
+		local new_target = self.target
+		OnChangeTarget(self, old_target, new_target)
+	end
+	local OldDropTarget = combat.DropTarget
+	combat.DropTarget = function(self, target)
+		local old_target = self.target
+		OldDropTarget(self, target)
+		local new_target = self.target
+		OnChangeTarget(self, old_target, new_target)
+	end
+end
+
 -- Subscription on all prefabs initialization. Here we create network variables, make subscriptions on events
 
 AddPrefabPostInitAny(function(inst)
     -- print("AddPrefabPostInitAny: {", inst, "}: Start")
     -- authorized health value, caluclated on server, replicated to client
     -- possibly overhead here as it is added to every single prefab, but seems to work
-    inst._hi_current_health_replicated = GLOBAL.net_float(inst.GUID, "_hi_current_health_replicated",
-        "hi_on_current_health_dirty")
+    inst._hi_current_health_replicated = GLOBAL.net_float(inst.GUID, "_hi_current_health_replicated", "hi_on_current_health_dirty")
     inst._hi_max_health_replicated = GLOBAL.net_float(inst.GUID, "_hi_max_health_replicated", "hi_on_max_health_dirty")
-	inst._hi_combat_target_repicated = GLOBAL.net_int(inst.GUID, "_hi_combat_target_replicated", "_hi_on_combat_target_dirty")
-	inst._hi_follow_target_replicated = GLOBAL.net_int(inst.GUID, "_hi_follow_target_replicated", "_hi_on_follow_target_dirty")
+	inst._hi_combat_target_replicated = GLOBAL.net_string(inst.GUID, "_hi_combat_target_replicated", "hi_on_combat_target_dirty")
+	inst._hi_follow_target_replicated = GLOBAL.net_string(inst.GUID, "_hi_follow_target_replicated", "hi_on_follow_target_dirty")
     -- this is a packed value+string data about damage replicated to client
     -- inst._hi_combined_damage_string = GLOBAL.net_string(inst.GUID, "_hi_combined_damage_string_replicated", "hi_on_combined_damage_string_dirty")
     local health_component = inst.components.health
     -- as health component persists only on server this will set the value on server and trigger synchronization to client
     if health_component ~= nil then
-        inst._hi_current_health_replicated:set(health_component.currenthealth)
-        inst._hi_max_health_replicated:set(health_component.currenthealth)
-		local OldSetMaxHealth = health_component.SetMaxHealth
-		health_component.SetMaxHealth = function(self, amount)
-			OldSetMaxHealth(self, amount)
-			inst._hi_max_health_replicated:set(amount)
-		end
+		HiServerProcessHealthComponent(health_component)
     end
 	local combat_component = inst.components.combat
     if combat_component ~= nil then
-		local function OnChangeTarget(inst, old_guid, new_guid)
-			if old_guid ~= new_guid then
-				-- print("ChangeTarget {", inst, "}: old: ", old_guid, ", new: ", new_guid)
-				inst._hi_combat_target_repicated:set(new_guid)
-			end
-		end
-		local OldEngageTarget = combat_component.EngageTarget
-		combat_component.EngageTarget = function(self, target)
-			local old_guid = self.target and self.target.GUID or 0
-			OldEngageTarget(self, target)
-			local new_guid = self.target and self.target.GUID or 0
-			OnChangeTarget(self.inst, old_guid, new_guid)
-		end
-		local OldDropTarget = combat_component.DropTarget
-		combat_component.DropTarget = function(self, target)
-			local old_guid = self.target and self.target.GUID or 0
-			OldDropTarget(self, target)
-			local new_guid = self.target and self.target.GUID or 0
-			OnChangeTarget(self.inst, old_guid, new_guid)
-		end
+		HiServerProcessCombat(combat_component)
     end
     if GLOBAL.TheWorld.ismastersim then
         -- print("AddPrefabPostInitAny: {", inst, "}: setting up server subscriptions")
@@ -261,6 +286,8 @@ AddPrefabPostInitAny(function(inst)
         HiClientOnEntityActive(inst)
         inst:ListenForEvent("hi_on_current_health_dirty", HiClientOnHealthDirty)
         inst:ListenForEvent("hi_on_max_health_dirty", HiClientOnHealthDirty)
+		inst:ListenForEvent("hi_on_combat_target_dirty", HiClientOnCombatTargetDirty)
+		inst:ListenForEvent("hi_on_follow_target_dirty", HiClientOnFollowTargetDirty)
         -- inst:ListenForEvent("hi_on_combined_damage_string_dirty", HiClientOnCombinedDamageStringDirty)
     end
 end)
