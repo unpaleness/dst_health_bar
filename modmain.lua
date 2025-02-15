@@ -14,61 +14,71 @@ end
 
 -- Client methods
 
+local function HiClientShouldShowHp(inst)
+    return not inst:IsAsleep()
+	    or not inst:HasTag("INLIMBO")
+end
+
 local function HiClientTryCreateHpWidget(inst)
-	if GLOBAL.TheNet:IsDedicated() or GLOBAL.ThePlayer == nil then
+    if GLOBAL.TheNet:IsDedicated() or GLOBAL.ThePlayer == nil then
+        return
+    end
+	if not HiClientShouldShowHp(inst) then
 		return
 	end
-	local widget = inst._hi_hp_widget
-	if widget ~= nil then
-		return
-	end
-	-- print("HiClientTryCreateHpWidget: {", inst, "}")
-	widget = GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiHpWidget(inst._hi_current_health_replicated:value(), inst._hi_max_health_replicated:value()))
-	widget:SetTarget(inst)
-	widget:OnUpdate(0)
-	inst._hi_hp_widget = widget
+    local widget = inst._hi_hp_widget
+    if widget ~= nil then
+        return
+    end
+    -- print("HiClientTryCreateHpWidget: {", inst, "}")
+    widget = GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiHpWidget(inst._hi_current_health_replicated:value(),
+        inst._hi_max_health_replicated:value()))
+    widget:SetTarget(inst)
+    inst._hi_hp_widget = widget
 end
 
 local function HiClientTryRemoveHpWidget(inst)
     if GLOBAL.TheNet:IsDedicated() then
-		return
-	end
-	local widget = inst._hi_hp_widget
-	if widget == nil then
-		return
-	end
-	-- print("HiClientTryRemoveHpWidget: {", inst, "}, hp: ", widget.hp, ", state: ", widget.state, ", scale: ", widget.scale, ", pos: ", widget:GetPosition())
-	widget:Kill()
-	inst._hi_hp_widget = nil
+        return
+    end
+    local widget = inst._hi_hp_widget
+    if widget == nil then
+        return
+    end
+    -- print("HiClientTryRemoveHpWidget: {", inst, "}, hp: ", widget.hp, ", state: ", widget.state, ", scale: ", widget.scale, ", pos: ", widget:GetPosition())
+    widget:Kill()
+    inst._hi_hp_widget = nil
 end
 
 local function HiClientTryUpdateHpWidget(inst)
-	local widget = inst._hi_hp_widget
-	if widget == nil then
-		return
-	end
-	widget:UpdateHp(inst._hi_current_health_replicated:value(), inst._hi_max_health_replicated:value())
+    local widget = inst._hi_hp_widget
+    if widget == nil then
+        return
+    end
+    widget:UpdateHp(inst._hi_current_health_replicated:value(), inst._hi_max_health_replicated:value())
 end
 
 local function HiClientTrySpawnDamageWidget(inst)
-	if GLOBAL.TheNet:IsDedicated() or GLOBAL.ThePlayer == nil or inst._hi_current_health_client == nil then
-		return
-	end
-	local damage_widget = GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiDamageWidget(inst._hi_current_health_replicated:value() - inst._hi_current_health_client))
-	damage_widget:SetTarget(inst)
-	damage_widget:OnUpdate(0)
+    if GLOBAL.TheNet:IsDedicated() or GLOBAL.ThePlayer == nil or inst._hi_current_health_client == nil then
+        return
+    end
+    local damage_widget = GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiDamageWidget(inst._hi_current_health_replicated
+    :value() - inst._hi_current_health_client))
+    damage_widget:SetTarget(inst)
 end
 
 local function HiClientOnHealthDirty(inst)
     local health_value = inst._hi_current_health_replicated:value()
     local max_health_value = inst._hi_max_health_replicated:value()
-	local health_value_client = inst._hi_current_health_client or 0
-    -- print("HiClientOnHealthDirty: {", inst, "}:", health_value_client, " -> ", health_value, " / ", max_health_value)
+    local health_value_client = inst._hi_current_health_client or 0
+    print("HiClientOnHealthDirty: {", inst, "}:", health_value_client, " -> ", health_value, " / ", max_health_value)
     if health_value > 0 and max_health_value > 0 then
         HiClientTryCreateHpWidget(inst)
     end
-	HiClientTrySpawnDamageWidget(inst)
-	HiClientTryUpdateHpWidget(inst)
+	if health_value ~= health_value_client then
+    	HiClientTrySpawnDamageWidget(inst)
+	end
+    HiClientTryUpdateHpWidget(inst)
     if health_value <= 0 then
         HiClientTryRemoveHpWidget(inst)
     end
@@ -103,12 +113,6 @@ end
 
 local function HiClientOnEntityActive(inst)
     -- print("HiClientOnEntityActive: {", inst, "}")
-    if inst:IsAsleep() then
-        return
-    end
-    if inst.entity:HasTag("INLIMBO") then
-        return
-    end
     local health_value_replicated = inst._hi_current_health_replicated:value()
     if health_value_replicated > 0 then
         inst._hi_current_health_client = health_value_replicated
@@ -187,6 +191,7 @@ AddPrefabPostInitAny(function(inst)
     inst._hi_current_health_replicated = GLOBAL.net_float(inst.GUID, "_hi_current_health_replicated",
         "hi_on_current_health_dirty")
     inst._hi_max_health_replicated = GLOBAL.net_float(inst.GUID, "_hi_max_health_replicated", "hi_on_max_health_dirty")
+	inst._hi_combat_target_repicated = GLOBAL.net_int(inst.GUID, "_hi_combat_target_replicated", "_hi_on_combat_target_dirty")
     -- this is a packed value+string data about damage replicated to client
     -- inst._hi_combined_damage_string = GLOBAL.net_string(inst.GUID, "_hi_combined_damage_string_replicated", "hi_on_combined_damage_string_dirty")
     local health_component = inst.components.health
@@ -194,6 +199,34 @@ AddPrefabPostInitAny(function(inst)
     if health_component ~= nil then
         inst._hi_current_health_replicated:set(health_component.currenthealth)
         inst._hi_max_health_replicated:set(health_component.currenthealth)
+		local OldSetMaxHealth = health_component.SetMaxHealth
+		health_component.SetMaxHealth = function(self, amount)
+			OldSetMaxHealth(self, amount)
+			inst._hi_max_health_replicated:set(amount)
+		end
+    end
+	local combat_component = inst.components.combat
+    if combat_component ~= nil then
+		local function OnChangeTarget(inst, old_guid, new_guid)
+			if old_guid ~= new_guid then
+				print("ChangeTarget {", inst, "}: old: ", old_guid, ", new: ", new_guid)
+				inst._hi_combat_target_repicated:set(new_guid)
+			end
+		end
+		local OldEngageTarget = combat_component.EngageTarget
+		combat_component.EngageTarget = function(self, target)
+			local old_guid = self.target and self.target.GUID or 0
+			OldEngageTarget(self, target)
+			local new_guid = self.target and self.target.GUID or 0
+			OnChangeTarget(self.inst, old_guid, new_guid)
+		end
+		local OldDropTarget = combat_component.DropTarget
+		combat_component.DropTarget = function(self, target)
+			local old_guid = self.target and self.target.GUID or 0
+			OldDropTarget(self, target)
+			local new_guid = self.target and self.target.GUID or 0
+			OnChangeTarget(self.inst, old_guid, new_guid)
+		end
     end
     if GLOBAL.TheWorld.ismastersim then
         -- print("AddPrefabPostInitAny: {", inst, "}: setting up server subscriptions")

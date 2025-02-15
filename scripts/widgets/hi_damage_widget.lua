@@ -34,6 +34,7 @@ local HiDamageWidget = Class(HiBaseWidget, function(self, hp_diff, type)
         hp_diff_string = "+" .. hp_diff_string
     end
     self.text = self:AddChild(Text(BODYTEXTFONT, 40, hp_diff_string, value_color))
+    self:UpdateWhilePaused(false)
 end)
 
 function HiDamageWidget:Kill()
