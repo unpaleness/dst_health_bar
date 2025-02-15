@@ -17,7 +17,11 @@ end
 -- Client methods
 
 local function HiClientShouldShowHp(inst)
-    return not inst:IsAsleep() and not inst:HasTag("INLIMBO")
+    return not inst:IsAsleep()
+		and not inst:HasTag("INLIMBO")
+		and not inst:HasTag("boat")
+		and not inst:HasTag("boatbumper")
+		and not inst:HasTag("wall")
 end
 
 local function HiClientTryCreateHpWidget(inst)
