@@ -2,33 +2,38 @@ local Text = require "widgets/text"
 local HiBaseWidget = require "widgets/hi_base_widget"
 local Widget = require "widgets/widget"
 
-local STATES = 4
-
-local function GetHpState(hp, max_hp)
-    return math.max(0, math.min(math.floor(hp * STATES / max_hp), STATES - 1))
-end
+local HP_INNER_SIZE_X = 196
+local HP_INNER_SIZE_Y = 46
 
 local function GetHpScale(max_hp)
     return math.log(max_hp) / 10
 end
 
-local function GetImageName(state)
-    return "icon-" .. tostring(state) .. ".tex"
-end
-
 local HiHpWidget = Class(HiBaseWidget, function(self, hp, max_hp)
     HiBaseWidget._ctor(self, "HiHpWidget")
+    -- self:SetScaleMode(SCALEMODE_PROPORTIONAL)
+    -- self:SetMaxPropUpscale(MAX_HUD_SCALE)
     self.offset = Vector3(0, -20, 0)
-    self.state = GetHpState(hp, max_hp)
     self.scale = GetHpScale(max_hp)
     self.hp = hp
-    self.image = self:AddChild(Image("images/heart.xml", GetImageName(self.state)))
+    self.image_bg = self:AddChild(Image("images/hpbar.xml", "HpBg.tex"))
+    self.image = self:AddChild(Image("images/hpbar.xml", "HpRed.tex"))
     self.text = self:AddChild(Text(BODYTEXTFONT, 40, math.floor(hp), {1, 1, 1, 1}))
     self:SetScale(self.scale)
 end)
 
+function HiHpWidget:SetTarget(target)
+    HiBaseWidget.SetTarget(self, target)
+    if self.target:HasTag("Player") then
+        self.image:SetTexture("images/hpbar.xml", "HpGreen.tex")
+    end
+end
+
 function HiHpWidget:Kill()
-    self.image:Kill()
+    self.image_bg:Kill()
+    if self.image ~= nil then
+        self.image:Kill()
+    end
     self.text:Kill()
     Widget.Kill(self)
 end
@@ -38,10 +43,14 @@ function HiHpWidget:UpdateHp(hp, max_hp)
         self.hp = hp
         self.text:SetString(math.floor(self.hp))
     end
-    local new_state = GetHpState(self.hp, max_hp)
-    if new_state ~= self.state then
-        self.state = new_state
-        self.image:SetTexture("images/heart.xml", GetImageName(self.state))
+    if max_hp ~= nil and max_hp == 0 then
+        print("HiHpWidget:UpdateHp: max_hp is 0")
+        return
+    end
+    if self.image ~= nil then
+        local ratio = hp / max_hp
+        self.image:SetPosition(HP_INNER_SIZE_X * 0.5 * (ratio - 1), 0, 0)
+        self.image:SetScale(ratio, 1)
     end
     local new_scale = GetHpScale(max_hp)
     if new_scale ~= self.scale then

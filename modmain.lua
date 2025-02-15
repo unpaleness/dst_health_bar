@@ -1,7 +1,7 @@
 if not GLOBAL.TheNet:IsDedicated() then
     Assets = {
-        Asset("IMAGE", "images/heart.tex"),
-        Asset("ATLAS", "images/heart.xml"),
+        Asset("IMAGE", "images/hpbar.tex"),
+        Asset("ATLAS", "images/hpbar.xml"),
     }
 end
 
