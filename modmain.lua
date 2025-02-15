@@ -1,7 +1,9 @@
 if not GLOBAL.TheNet:IsDedicated() then
     Assets = {
-        Asset("IMAGE", "images/hpbar.tex"),
-        Asset("ATLAS", "images/hpbar.xml"),
+        Asset("IMAGE", "images/hp_bg.tex"),
+        Asset("ATLAS", "images/hp_bg.xml"),
+        Asset("IMAGE", "images/hp_white.tex"),
+        Asset("ATLAS", "images/hp_white.xml"),
     }
 end
 
@@ -15,8 +17,7 @@ end
 -- Client methods
 
 local function HiClientShouldShowHp(inst)
-    return not inst:IsAsleep()
-	    or not inst:HasTag("INLIMBO")
+    return not inst:IsAsleep() and not inst:HasTag("INLIMBO")
 end
 
 local function HiClientTryCreateHpWidget(inst)
@@ -31,8 +32,7 @@ local function HiClientTryCreateHpWidget(inst)
         return
     end
     -- print("HiClientTryCreateHpWidget: {", inst, "}")
-    widget = GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiHpWidget(inst._hi_current_health_replicated:value(),
-        inst._hi_max_health_replicated:value()))
+    widget = GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiHpWidget(inst._hi_current_health_client, inst._hi_max_health_client))
     widget:SetTarget(inst)
     inst._hi_hp_widget = widget
 end
@@ -55,7 +55,7 @@ local function HiClientTryUpdateHpWidget(inst)
     if widget == nil then
         return
     end
-    widget:UpdateHp(inst._hi_current_health_replicated:value(), inst._hi_max_health_replicated:value())
+    widget:UpdateHp(inst._hi_current_health_client, inst._hi_max_health_client)
 end
 
 local function HiClientTrySpawnDamageWidget(inst)
@@ -71,18 +71,20 @@ local function HiClientOnHealthDirty(inst)
     local health_value = inst._hi_current_health_replicated:value()
     local max_health_value = inst._hi_max_health_replicated:value()
     local health_value_client = inst._hi_current_health_client or 0
-    print("HiClientOnHealthDirty: {", inst, "}:", health_value_client, " -> ", health_value, " / ", max_health_value)
+	local max_health_value_client = inst._hi_max_health_client or 0
+    -- print("HiClientOnHealthDirty: {", inst, "}:", health_value_client, " -> ", health_value, " / ", max_health_value_client, " -> ", max_health_value)
+	if inst._hi_current_health_client ~= nil and health_value ~= health_value_client then
+    	HiClientTrySpawnDamageWidget(inst)
+	end
+    inst._hi_current_health_client = health_value
+	inst._hi_max_health_client = max_health_value
     if health_value > 0 and max_health_value > 0 then
         HiClientTryCreateHpWidget(inst)
     end
-	if health_value ~= health_value_client then
-    	HiClientTrySpawnDamageWidget(inst)
-	end
     HiClientTryUpdateHpWidget(inst)
-    if health_value <= 0 then
+    if health_value <= 0  or max_health_value <= 0 then
         HiClientTryRemoveHpWidget(inst)
     end
-    inst._hi_current_health_client = health_value
 end
 
 --[[
@@ -113,11 +115,7 @@ end
 
 local function HiClientOnEntityActive(inst)
     -- print("HiClientOnEntityActive: {", inst, "}")
-    local health_value_replicated = inst._hi_current_health_replicated:value()
-    if health_value_replicated > 0 then
-        inst._hi_current_health_client = health_value_replicated
-        HiClientTryCreateHpWidget(inst)
-    end
+	HiClientOnHealthDirty(inst)
 end
 
 local function HiClientOnEntityPassive(inst)
@@ -163,6 +161,16 @@ local function HiServerOnHealthDelta(inst, data)
     inst._hi_current_health_replicated:set(health_component.currenthealth)
 end
 
+local function HiServerOnStartFollowing(inst, data)
+	print("HiServerOnStartFollowing {", inst, "}: ", data.leader)
+	inst._hi_follow_target_replicated:set(data.leader.GUID)
+end
+
+local function HiServerOnStopFollowing(inst, data)
+	print("HiServerOnStopFollowing {", inst, "}: ", data.leader)
+	inst._hi_follow_target_replicated:set(0)
+end
+
 --[[
 local function HiServerOnAttacked(inst, data)
 	local combat_component = inst.components.combat
@@ -192,6 +200,7 @@ AddPrefabPostInitAny(function(inst)
         "hi_on_current_health_dirty")
     inst._hi_max_health_replicated = GLOBAL.net_float(inst.GUID, "_hi_max_health_replicated", "hi_on_max_health_dirty")
 	inst._hi_combat_target_repicated = GLOBAL.net_int(inst.GUID, "_hi_combat_target_replicated", "_hi_on_combat_target_dirty")
+	inst._hi_follow_target_replicated = GLOBAL.net_int(inst.GUID, "_hi_follow_target_replicated", "_hi_on_follow_target_dirty")
     -- this is a packed value+string data about damage replicated to client
     -- inst._hi_combined_damage_string = GLOBAL.net_string(inst.GUID, "_hi_combined_damage_string_replicated", "hi_on_combined_damage_string_dirty")
     local health_component = inst.components.health
@@ -209,7 +218,7 @@ AddPrefabPostInitAny(function(inst)
     if combat_component ~= nil then
 		local function OnChangeTarget(inst, old_guid, new_guid)
 			if old_guid ~= new_guid then
-				print("ChangeTarget {", inst, "}: old: ", old_guid, ", new: ", new_guid)
+				-- print("ChangeTarget {", inst, "}: old: ", old_guid, ", new: ", new_guid)
 				inst._hi_combat_target_repicated:set(new_guid)
 			end
 		end
@@ -231,12 +240,15 @@ AddPrefabPostInitAny(function(inst)
     if GLOBAL.TheWorld.ismastersim then
         -- print("AddPrefabPostInitAny: {", inst, "}: setting up server subscriptions")
         inst:ListenForEvent("healthdelta", HiServerOnHealthDelta)
+        inst:ListenForEvent("startfollowing", HiServerOnStartFollowing)
+		inst:ListenForEvent("stopfollowing", HiServerOnStopFollowing)
         -- inst:ListenForEvent("attacked", HiServerOnAttacked)
     end
     if not GLOBAL.TheNet:IsDedicated() then
         -- print("AddPrefabPostInitAny: {", inst, "}: setting up client subscriptions")
         -- introduce this value as the last value stored by client to calculate health diff upon replicated health value update
         inst._hi_current_health_client = nil
+		inst._hi_max_health_client = nil
         inst:ListenForEvent("exitlimbo", HiClientOnExitLimbo)
         inst:ListenForEvent("entitywake", HiClientOnWake)
         inst:ListenForEvent("enterlimbo", HiClientOnEnterLimbo)

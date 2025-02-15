@@ -26,13 +26,6 @@ function HiBaseWidget:OnUpdate(dt)
     local pos = GetPosition(self.target)
     if pos ~= nil then
         self:SetPosition(pos + self.offset)
-    --     if not self.shown then
-    --         self:Show()
-    --     end
-    -- else
-    --     if self.shown then
-    --         self:Hide()
-    --     end
     end
 end
 

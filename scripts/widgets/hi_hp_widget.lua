@@ -7,49 +7,47 @@ local HP_INNER_SIZE_Y = 46
 local STATE_HOSTILE = 0
 local STATE_FRIEND = 1
 local STATE_NEUTRAL = 2
-local STATE_HIDDEN = 3
+local STATE_PLAYER = 3
+local TINT_HOSTILE = {0.75, 0.25, 0.25, 1}
+local TINT_FRIEND = {0.25, 0.75, 0.25, 1}
+local TINT_NEUTRAL = {0.75, 0.75, 0.75, 1}
+local TINT_PLAYER = {0.25, 0.25, 0.75, 1}
+
+local function SetTint(image, tint)
+    image:SetTint(tint[1], tint[2], tint[3], tint[4])
+end
 
 local function GetHpScale(max_hp)
-    local result = math.log(max_hp) / 10
-    return math.max(result, 0.1)
+    local result = math.log(max_hp) / math.log(10) / 5
+    return math.min(1, math.max(result, 0.1))
 end
 
 local function GetHpWidgetState(target)
-    -- if target:HasTag("hostile")
-    --     or target:HasTag("monster")
-    --     or target:HasTag("epic")
-    -- then
-    --     return STATE_HOSTILE
-    -- elseif target:HasTag("companion")
-    --     or target:HasTag("pet")
-    --     or target:HasTag("player")
-    -- then
-    --     return STATE_FRIEND
-    -- end
-    local combat_target_value = target._hi_combat_target_repicated:value()
-    -- print("GetHpWidgetState: {", target, "}: target: ", combat_target_value, ", player: ", ThePlayer.GUID)
-    if combat_target_value ~= nil and combat_target_value == ThePlayer.GUID then
-        return STATE_HOSTILE
-    else
+    if target:HasTag("player") then
+        return STATE_PLAYER
+    end
+    local follow_target_value = target._hi_follow_target_replicated:value()
+    if follow_target_value == ThePlayer.GUID or target:HasTag("companion") then
         return STATE_FRIEND
     end
+    local combat_target_value = target._hi_combat_target_repicated:value()
+    if combat_target_value == ThePlayer.GUID then
+        return STATE_HOSTILE
+    end
 
-    return STATE_HIDDEN
+    return STATE_NEUTRAL
 end
 
 local HiHpWidget = Class(HiBaseWidget, function(self, hp, max_hp)
     HiBaseWidget._ctor(self, "HiHpWidget")
-    -- self:SetScaleMode(SCALEMODE_PROPORTIONAL)
-    -- self:SetMaxPropUpscale(MAX_HUD_SCALE)
     self.offset = Vector3(0, -20, 0)
     self.scale = 1
     self.hp = 0
-    self.state = STATE_HIDDEN
-    self.image_bg = self:AddChild(Image("images/hpbar.xml", "HpBg.tex"))
-    self.image = self:AddChild(Image("images/hpbar.xml", "HpRed.tex"))
-    self.text = self:AddChild(Text(BODYTEXTFONT, 40, math.floor(hp), { 1, 1, 1, 1 }))
+    self.state = STATE_NEUTRAL
+    self.image_bg = self:AddChild(Image("images/hp_bg.xml", "HpBg.tex"))
+    self.image = self:AddChild(Image("images/hp_white.xml", "HpWhite.tex"))
+    self.text = self:AddChild(Text(BODYTEXTFONT, 50, math.floor(hp), { 1, 1, 1, 1 }))
     self:UpdateHp(hp, max_hp)
-    self:Hide()
     self:UpdateWhilePaused(false)
 end)
 
@@ -88,17 +86,14 @@ function HiHpWidget:OnUpdate(dt)
     local state = GetHpWidgetState(self.target)
     if state ~= self.state then
         self.state = state
-        if self.state == STATE_HOSTILE then
-            self.image:SetTexture("images/hpbar.xml", "HpRed.tex")
-            self:Show()
+        if self.state == STATE_PLAYER then
+            SetTint(self.image, TINT_PLAYER)
+        elseif self.state == STATE_HOSTILE then
+            SetTint(self.image, TINT_HOSTILE)
         elseif self.state == STATE_FRIEND then
-            self.image:SetTexture("images/hpbar.xml", "HpGreen.tex")
-            self:Show()
+            SetTint(self.image, TINT_FRIEND)
         elseif self.state == STATE_NEUTRAL then
-            self.image:SetTexture("images/hpbar.xml", "HpGreen.tex")
-            self:Show()
-        else
-            self:Hide()
+            SetTint(self.image, TINT_NEUTRAL)
         end
     end
 end

@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Atlas>
+	<Texture filename="hp_white.tex" />
+	<Elements>
+		<Element name="HpWhite.tex" u1="0.001" u2="0.749" v2="0.999" v1="0.34475" variant="" />
+	</Elements>
+</Atlas>

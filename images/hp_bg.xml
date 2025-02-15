@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Atlas>
+	<Texture filename="hp_bg.tex" />
+	<Elements>
+		<Element name="HpBg.tex" u1="0.001" u2="0.78025" v2="0.999" v1="0.21975" variant="" />
+	</Elements>
+</Atlas>
