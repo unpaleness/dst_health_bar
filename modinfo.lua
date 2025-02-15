@@ -1,7 +1,7 @@
 name = "Health indicators"
-description = "A very base health and damage indicators. May be unstable and glitchy for now."
+description = "A very base health and damage indicators. Health bars are dynamically colored base on hostility of target"
 author = "unpaleness"
-version = "0.0.4"
+version = "0.0.5"
 
 forumthread = ""
 
