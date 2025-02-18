@@ -1,8 +1,6 @@
 local Screen = require "widgets/screen"
 local TEMPLATES = require "widgets/redux/templates"
 
-local SETTINGS_FILE = "hi_settings"
-
 local OPACITY_OPTIONS = {
     { text = "0%",   data = 0 },
     { text = "10%",  data = 0.1 },
@@ -21,16 +19,17 @@ local HiSettingsScreen = Class(Screen, function(self)
     Screen._ctor(self, "HiSettingsScreen")
 	self.root = self:AddChild(TEMPLATES.ScreenRoot("HiSettingsScreenRoot"))
     self.settings = {}
-    self.root.spinner_hp_bar_alpha = self:AddChild(TEMPLATES.LabelSpinner("Health bar opacity", OPACITY_OPTIONS, 200, 50, 25, 0, UIFONT, 18, 0, function(selected, old)
-        print("HiSettingsScreen.spinner_hp_bar_alpha changed: ", selected and selected or "<nil>", old and old or "<nil>")
-        self.settings.hp_bar_alpha = selected
+    self.root.spinner_hp_bar_opacity = self:AddChild(TEMPLATES.LabelSpinner("Health bar opacity", OPACITY_OPTIONS, nil, nil, 50, nil, nil, nil, nil, function(selected, old)
+        print("HiSettingsScreen.spinner_hp_bar_opacity changed: ", selected and selected or "<nil>", old and old or "<nil>")
+        HI_SETTINGS.data.hp_bar_opacity = selected
     end))
-    self.root.spinner_hp_bar_alpha:SetVAnchor(ANCHOR_MIDDLE)
-    self.root.spinner_hp_bar_alpha:SetHAnchor(ANCHOR_MIDDLE)
-    self.root.spinner_hp_bar_alpha:SetPosition(0, 50)
+    self.root.spinner_hp_bar_opacity:SetVAnchor(ANCHOR_MIDDLE)
+    self.root.spinner_hp_bar_opacity:SetHAnchor(ANCHOR_MIDDLE)
+    self.root.spinner_hp_bar_opacity:SetPosition(0, 50)
+    self.root.spinner_hp_bar_opacity.spinner:SetSelected(HI_SETTINGS.data.hp_bar_opacity)
     self.root.button_apply = self:AddChild(TEMPLATES.StandardButton(
         function()
-            self:SaveSettings()
+            HI_SETTINGS:Save()
         end, "Apply", {100, 50}))
     self.root.button_apply:SetVAnchor(ANCHOR_MIDDLE)
     self.root.button_apply:SetHAnchor(ANCHOR_MIDDLE)
@@ -45,18 +44,5 @@ local HiSettingsScreen = Class(Screen, function(self)
     self.root.button_close:SetPosition(0, -50)
     SetAutopaused(true)
 end)
-
-function HiSettingsScreen:SaveSettings()
-    TheSim:SetPersistentString(SETTINGS_FILE, json.encode(self.settings), false)
-end
-function HiSettingsScreen:LoadSettings()
-    TheSim:GetPersistentString(SETTINGS_FILE, function(success, data)
-        if data ~= nil and data ~= "" then
-            self.settings = json.decode(data)
-        end
-
-        self.root.spinner_hp_bar_alpha.spinner:SetSelected(self.settings.hp_bar_alpha)
-    end)
-end
 
 return HiSettingsScreen

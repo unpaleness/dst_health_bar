@@ -1,3 +1,6 @@
+local HiHpWidget = nil
+local HiDamageWidget = nil
+
 if not GLOBAL.TheNet:IsDedicated() then
     Assets = {
         Asset("IMAGE", "images/hp_bg.tex"),
@@ -5,13 +8,12 @@ if not GLOBAL.TheNet:IsDedicated() then
         Asset("IMAGE", "images/hp_white.tex"),
         Asset("ATLAS", "images/hp_white.xml"),
     }
-end
 
-local HiHpWidget = nil
-local HiDamageWidget = nil
-if not GLOBAL.TheNet:IsDedicated() then
     HiHpWidget = require "widgets/hi_hp_widget"
     HiDamageWidget = require "widgets/hi_damage_widget"
+
+    GLOBAL.HI_SETTINGS = require "hi_settings"
+    GLOBAL.HI_SETTINGS:Load()
 end
 
 -- Client methods
@@ -39,6 +41,7 @@ local function HiClientTryCreateHpWidget(inst)
     widget = GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiHpWidget(inst._hi_current_health_client, inst._hi_max_health_client))
     widget:SetTarget(inst)
     inst._hi_hp_widget = widget
+    GLOBAL.HI_SETTINGS.cached_hp_widgets[inst.GUID] = widget
 end
 
 local function HiClientTryRemoveHpWidget(inst)
@@ -52,6 +55,7 @@ local function HiClientTryRemoveHpWidget(inst)
     -- print("HiClientTryRemoveHpWidget: {", inst, "}, hp: ", widget.hp, ", state: ", widget.state, ", scale: ", widget.scale, ", pos: ", widget:GetPosition())
     widget:Kill()
     inst._hi_hp_widget = nil
+    GLOBAL.HI_SETTINGS.cached_hp_widgets[inst.GUID] = nil
 end
 
 local function HiClientTryUpdateHpWidget(inst)

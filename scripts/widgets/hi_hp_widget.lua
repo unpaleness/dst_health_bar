@@ -8,10 +8,10 @@ local STATE_HOSTILE = 0
 local STATE_FRIEND = 1
 local STATE_NEUTRAL = 2
 local STATE_PLAYER = 3
-local TINT_HOSTILE = {0.75, 0.25, 0.25}
-local TINT_FRIEND = {0.25, 0.75, 0.25}
-local TINT_NEUTRAL = {0.75, 0.75, 0.75}
-local TINT_PLAYER = {0.75, 0.25, 0.75}
+local TINT_HOSTILE = {0.75, 0.25, 0.25, 1}
+local TINT_FRIEND = {0.25, 0.75, 0.25, 1}
+local TINT_NEUTRAL = {0.75, 0.75, 0.75, 1}
+local TINT_PLAYER = {0.75, 0.25, 0.75, 1}
 
 local function GetHpScale(max_hp)
     local result = math.log(max_hp) / math.log(10) / 5
@@ -39,18 +39,23 @@ local HiHpWidget = Class(HiBaseWidget, function(self, hp, max_hp)
     HiBaseWidget._ctor(self, "HiHpWidget")
     self.offset = Vector3(0, -20, 0)
     self.scale = 1
-    self.alpha = 0.5
     self.hp = 0
     self.state = STATE_NEUTRAL
     self.image_bg = self:AddChild(Image("images/hp_bg.xml", "HpBg.tex"))
     self.image = self:AddChild(Image("images/hp_white.xml", "HpWhite.tex"))
-    self.text = self:AddChild(Text(BODYTEXTFONT, 50, math.floor(hp), { 1, 1, 1, self.alpha }))
+    self.text = self:AddChild(Text(BODYTEXTFONT, 50, math.floor(hp), { 1, 1, 1, 1 }))
+    self:SetOpacity(HI_SETTINGS.data.hp_bar_opacity)
     self:UpdateHp(hp, max_hp)
     self:UpdateWhilePaused(false)
 end)
 
+function HiHpWidget:SetOpacity(a)
+    self.image_bg:SetFadeAlpha(a)
+    self.image:SetFadeAlpha(a)
+end
+
 function HiHpWidget:SetImageTint(tint)
-    self.image:SetTint(tint[1], tint[2], tint[3], self.alpha)
+    self.image:SetTint(tint[1], tint[2], tint[3], tint[4])
 end
 
 function HiHpWidget:SetTarget(target)
@@ -101,7 +106,12 @@ function HiHpWidget:UpdateState()
         elseif self.state == STATE_NEUTRAL then
             self:SetImageTint(TINT_NEUTRAL)
         end
+        self:SetOpacity(HI_SETTINGS.data.hp_bar_opacity)
     end
+end
+
+function HiHpWidget:ApplySettings()
+    self:SetOpacity(HI_SETTINGS.data.hp_bar_opacity)
 end
 
 return HiHpWidget
