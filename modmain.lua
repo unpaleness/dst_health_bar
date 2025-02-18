@@ -245,7 +245,7 @@ local function HiServerProcessCombat(combat)
 	end
 end
 
--- Subscription on all prefabs initialization. Here we create network variables, make subscriptions on events
+-- Subscription on all prefabs initialization. Here we create network variables, make subscriptions on events. This should be done on both client and server
 
 AddPrefabPostInitAny(function(inst)
     -- print("AddPrefabPostInitAny: {", inst, "}: Start")
@@ -291,3 +291,15 @@ AddPrefabPostInitAny(function(inst)
         -- inst:ListenForEvent("hi_on_combined_damage_string_dirty", HiClientOnCombinedDamageStringDirty)
     end
 end)
+
+-- Settings up user configuration in-game widget. Client only
+
+if not GLOBAL.TheNet:IsDedicated() then
+    local HiSettingsButtonWidget = require "widgets/hi_settings_button_widget"
+	AddSimPostInit(function()
+		AddClassPostConstruct("widgets/controls", function(self, owner)
+			local button = HiSettingsButtonWidget()
+			self.topleft_root:AddChild(button)
+		end)
+	end)
+end

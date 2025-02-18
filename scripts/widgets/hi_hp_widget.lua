@@ -8,14 +8,10 @@ local STATE_HOSTILE = 0
 local STATE_FRIEND = 1
 local STATE_NEUTRAL = 2
 local STATE_PLAYER = 3
-local TINT_HOSTILE = {0.75, 0.25, 0.25, 1}
-local TINT_FRIEND = {0.25, 0.75, 0.25, 1}
-local TINT_NEUTRAL = {0.75, 0.75, 0.75, 1}
-local TINT_PLAYER = {0.25, 0.25, 0.75, 1}
-
-local function SetTint(image, tint)
-    image:SetTint(tint[1], tint[2], tint[3], tint[4])
-end
+local TINT_HOSTILE = {0.75, 0.25, 0.25}
+local TINT_FRIEND = {0.25, 0.75, 0.25}
+local TINT_NEUTRAL = {0.75, 0.75, 0.75}
+local TINT_PLAYER = {0.75, 0.25, 0.75}
 
 local function GetHpScale(max_hp)
     local result = math.log(max_hp) / math.log(10) / 5
@@ -43,14 +39,19 @@ local HiHpWidget = Class(HiBaseWidget, function(self, hp, max_hp)
     HiBaseWidget._ctor(self, "HiHpWidget")
     self.offset = Vector3(0, -20, 0)
     self.scale = 1
+    self.alpha = 0.5
     self.hp = 0
     self.state = STATE_NEUTRAL
     self.image_bg = self:AddChild(Image("images/hp_bg.xml", "HpBg.tex"))
     self.image = self:AddChild(Image("images/hp_white.xml", "HpWhite.tex"))
-    self.text = self:AddChild(Text(BODYTEXTFONT, 50, math.floor(hp), { 1, 1, 1, 1 }))
+    self.text = self:AddChild(Text(BODYTEXTFONT, 50, math.floor(hp), { 1, 1, 1, self.alpha }))
     self:UpdateHp(hp, max_hp)
     self:UpdateWhilePaused(false)
 end)
+
+function HiHpWidget:SetImageTint(tint)
+    self.image:SetTint(tint[1], tint[2], tint[3], self.alpha)
+end
 
 function HiHpWidget:SetTarget(target)
     HiBaseWidget.SetTarget(self, target)
@@ -92,13 +93,13 @@ function HiHpWidget:UpdateState()
     if state ~= self.state then
         self.state = state
         if self.state == STATE_PLAYER then
-            SetTint(self.image, TINT_PLAYER)
+            self:SetImageTint(TINT_PLAYER)
         elseif self.state == STATE_HOSTILE then
-            SetTint(self.image, TINT_HOSTILE)
+            self:SetImageTint(TINT_HOSTILE)
         elseif self.state == STATE_FRIEND then
-            SetTint(self.image, TINT_FRIEND)
+            self:SetImageTint(TINT_FRIEND)
         elseif self.state == STATE_NEUTRAL then
-            SetTint(self.image, TINT_NEUTRAL)
+            self:SetImageTint(TINT_NEUTRAL)
         end
     end
 end
