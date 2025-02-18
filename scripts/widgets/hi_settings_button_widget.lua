@@ -6,6 +6,7 @@ local HiSettingsButtonWidget = Class(Widget, function(self)
     Widget._ctor(self, "HiSettingsButtonWidget")
     self.button = self:AddChild(TEMPLATES.StandardButton(
         function()
+            HI_SETTINGS:Load()
             local settings_screen = HiSettingsScreen()
             ThePlayer.HUD:OpenScreenUnderPause(settings_screen)
         end, "HI", {50, 50}))
