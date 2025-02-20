@@ -2,12 +2,12 @@ local Text = require "widgets/text"
 local HiBaseWidget = require "widgets/hi_base_widget"
 local Widget = require "widgets/widget"
 
-local HP_INNER_SIZE_X = 196
-local HP_INNER_SIZE_Y = 46
+local HP_INNER_SIZE_X = 284
 local STATE_HOSTILE = 0
 local STATE_FRIEND = 1
 local STATE_NEUTRAL = 2
 local STATE_PLAYER = 3
+local FONT_SIZE = 100
 local TINT_HOSTILE = {0.75, 0.25, 0.25, 1}
 local TINT_FRIEND = {0.25, 0.75, 0.25, 1}
 local TINT_NEUTRAL = {0.75, 0.75, 0.75, 1}
@@ -15,7 +15,7 @@ local TINT_PLAYER = {0.75, 0.25, 0.75, 1}
 
 local function GetHpScale(max_hp)
     local result = math.log(max_hp) / math.log(10) / 5
-    return math.min(1, math.max(result, 0.1))
+    return math.min(1, math.max(result, 0.2)) / 2
 end
 
 local function GetHpWidgetState(target)
@@ -43,7 +43,8 @@ local HiHpWidget = Class(HiBaseWidget, function(self, hp, max_hp)
     self.state = STATE_NEUTRAL
     self.image_bg = self:AddChild(Image("images/hp_bg.xml", "HpBg.tex"))
     self.image = self:AddChild(Image("images/hp_white.xml", "HpWhite.tex"))
-    self.text = self:AddChild(Text(BODYTEXTFONT, 50, math.floor(hp), { 1, 1, 1, 1 }))
+    self.text = self:AddChild(Text(BODYTEXTFONT, FONT_SIZE, math.floor(hp), { 1, 1, 1, 1 }))
+    self.text:SetPosition(0, -FONT_SIZE / 1.5)
     self:SetOpacity(HI_SETTINGS.data.hp_bar_opacity)
     self:UpdateHp(hp, max_hp)
     self:UpdateWhilePaused(false)
@@ -60,7 +61,7 @@ end
 
 function HiHpWidget:SetTarget(target)
     HiBaseWidget.SetTarget(self, target)
-    self:UpdateState()
+    self:UpdateState(true)
 end
 
 function HiHpWidget:Kill()
@@ -93,9 +94,9 @@ function HiHpWidget:UpdateHp(hp, max_hp)
     end
 end
 
-function HiHpWidget:UpdateState()
+function HiHpWidget:UpdateState(force)
     local state = GetHpWidgetState(self.target)
-    if state ~= self.state then
+    if state ~= self.state or force then
         self.state = state
         if self.state == STATE_PLAYER then
             self:SetImageTint(TINT_PLAYER)

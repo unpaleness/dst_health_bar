@@ -2,6 +2,6 @@
 <Atlas>
 	<Texture filename="hp_white.tex" />
 	<Elements>
-		<Element name="HpWhite.tex" u1="0.001" u2="0.749" v2="0.999" v1="0.34475" variant="" />
+		<Element name="HpWhite.tex" u1="0.001" u2="0.5536875" v2="0.999" v1="0.251" variant="" />
 	</Elements>
 </Atlas>

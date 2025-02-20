@@ -16,7 +16,7 @@ function HiSettings:UpdateWidgets()
 end
 
 function HiSettings:Save()
-    TheSim:SetPersistentString(SETTINGS_FILE, json.encode(self.data), false)
+    TheSim:SetPersistentString(SETTINGS_FILE, json.encode(self.data), true)
     self:UpdateWidgets()
 end
 
