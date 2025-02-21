@@ -5,7 +5,7 @@ Features:
 - damage indicators
 ]]
 author = "unpaleness"
-version = "0.0.6"
+version = "0.0.7"
 
 steam_description = [[
 [b]A very base health and damage indicators[/b]
@@ -14,7 +14,7 @@ steam_description = [[
 [list]
 [*]health bars are dynamically colored based on hostility of target:
 [list]
-[*]blue - player
+[*]purple - player
 [*]green - allies
 [*]grey - neutral toward player (at the moment)
 [*]red - hostile
@@ -22,6 +22,7 @@ steam_description = [[
 [*]health bars are scaled based on max hp of target
 [*]damage indicators emit on HP change (red - damage, green - heal)
 [*]works on both local games and dedicated servers
+[*]settings (only hp bar opacity for now)
 [/list]
 
 [h3]Notes:[/h3]
@@ -33,7 +34,7 @@ steam_description = [[
 [list]
 [*]add some juicy stuff on hp bars to improve feedback (animations of hp lost/obtained)
 [*]make damage indicators color based on damage type (like in RPGs)
-[*]add customization for clients
+[*]add more customization for clients
 [/list]
 ]]
 
