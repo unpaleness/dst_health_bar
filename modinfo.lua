@@ -5,7 +5,7 @@ Features:
 - damage indicators
 ]]
 author = "unpaleness"
-version = "0.0.7"
+version = "0.0.8"
 
 steam_description = [[
 [b]A very base health and damage indicators[/b]
