@@ -125,4 +125,15 @@ function HiHpWidget:ApplySettings()
     self:SetOpacity(HI_SETTINGS.data.hp_bar_opacity)
 end
 
+function HiHpWidget:OnUpdate(dt)
+    HiBaseWidget.OnUpdate(self, dt)
+
+    local is_target_visible = CanEntitySeeTarget(ThePlayer, self.target)
+    if is_target_visible then
+        self:Show()
+    else
+        self:Hide()
+    end
+end
+
 return HiHpWidget
