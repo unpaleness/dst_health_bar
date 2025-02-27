@@ -3,6 +3,7 @@ local HiBaseWidget = require "widgets/hi_base_widget"
 local Widget = require "widgets/widget"
 
 local HP_INNER_SIZE_X = 284
+local HP_INNER_SIZE_Y = 24
 local IMAGE_SCALE = 0.5
 local STATE_HOSTILE = 0
 local STATE_FRIEND = 1
@@ -22,7 +23,7 @@ local function GetHpScale(value)
     local result_max = 1
     local clamped_value = math.min(cap_max, math.max(math.abs(value), cap_min))
     local result = math.log(clamped_value) / math.log(cap_max) * (result_max - result_min) + result_min
-    print("GetHpScale: ", math.log(clamped_value), " / ", math.log(cap_max), " * " , (result_max - result_min), " + ", result_min, " = ", result)
+    -- print("GetHpScale: ", math.log(clamped_value), " / ", math.log(cap_max), " * " , (result_max - result_min), " + ", result_min, " = ", result)
     return result
 end
 

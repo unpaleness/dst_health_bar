@@ -18,7 +18,7 @@ local function GetDamageScale(value)
     local result_max = 1
     local clamped_value = math.min(cap_max, math.max(math.abs(value), cap_min))
     local result = math.log(clamped_value) / math.log(cap_max) * (result_max - result_min) + result_min
-    print("GetDamageScale: ", math.log(clamped_value), " / ", math.log(cap_max), " * " , (result_max - result_min), " + ", result_min, " = ", result)
+    -- print("GetDamageScale: ", math.log(clamped_value), " / ", math.log(cap_max), " * " , (result_max - result_min), " + ", result_min, " = ", result)
     return result
 end
 
