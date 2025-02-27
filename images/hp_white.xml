@@ -2,6 +2,14 @@
 <Atlas>
 	<Texture filename="hp_white.tex" />
 	<Elements>
-		<Element name="HpWhite.tex" u1="0.001" u2="0.5536875" v2="0.999" v1="0.251" variant="" />
+		<Element name="bottomleft.tex" u1="0" u2="0.5" v1="0" v2="0.5" variant="" />
+		<Element name="bottom.tex" u1="0.5" u2="0.5" v1="0" v2="0.5" variant="" />
+		<Element name="bottomright.tex" u1="0.5" u2="1" v1="0" v2="0.5" variant="" />
+		<Element name="left.tex" u1="0" u2="0.5" v1="0.5" v2="0.5" variant="" />
+		<Element name="center.tex" u1="0.5" u2="0.5" v1="0.5" v2="0.5" variant="" />
+		<Element name="right.tex" u1="0.5" u2="1" v1="0.5" v2="0.5" variant="" />
+		<Element name="topleft.tex" u1="0" u2="0.5" v1="0.5" v2="1" variant="" />
+		<Element name="top.tex" u1="0.5" u2="0.5" v1="0.5" v2="1" variant="" />
+		<Element name="topright.tex" u1="0.5" u2="1" v1="0.5" v2="1" variant="" />
 	</Elements>
 </Atlas>
