@@ -5,7 +5,7 @@ Features:
 - damage indicators
 ]]
 author = "unpaleness"
-version = "0.0.9"
+version = "0.0.10"
 
 steam_description = [[
 [b]A very base health and damage indicators[/b]
@@ -32,7 +32,7 @@ steam_description = [[
 
 [h3]Plans:[/h3]
 [list]
-[*]add some juicy stuff on hp bars to improve feedback (animations of hp lost/obtained)
+[*]add some stuff on hp bars to improve feedback (animations of hp lost/obtained)
 [*]make damage indicators color based on damage type (like in RPGs)
 [*]add more customization for clients
 [/list]
