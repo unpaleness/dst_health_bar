@@ -8,18 +8,18 @@ local ACCELERATION = -100.0
 local COLOR_DAMAGE = {1, 0, 0, 1}
 local COLOR_HEAL = {0, 1, 0, 1}
 local COLOR_BLOCKED = {1, 1, 1, 1}
-local FONT_SIZE = 50
+local FONT_SIZE_MAX = 50
+local FONT_SIZE_MIN = 10
 
-local function GetDamageScale(value)
+local function GetFontSize(value)
     -- Let's say 0.25 scale will be at value <= 1 and 1 scale will be at value >= 200
     local cap_min = 1
     local cap_max = 200
     local result_min = 0.33
     local result_max = 1
     local clamped_value = math.min(cap_max, math.max(math.abs(value), cap_min))
-    local result = math.log(clamped_value) / math.log(cap_max) * (result_max - result_min) + result_min
-    -- print("GetDamageScale: ", math.log(clamped_value), " / ", math.log(cap_max), " * " , (result_max - result_min), " + ", result_min, " = ", result)
-    return result
+    local scale = math.log(clamped_value) / math.log(cap_max) * (result_max - result_min) + result_min
+    return math.max(math.floor(FONT_SIZE_MAX * scale), FONT_SIZE_MIN)
 end
 
 local function HiFormatFloat(value)
@@ -47,9 +47,8 @@ local HiDamageWidget = Class(HiBaseWidget, function(self, hp_diff, type)
         value_color = COLOR_HEAL
         hp_diff_string = "+" .. hp_diff_string
     end
-    self.text = self:AddChild(Text(BODYTEXTFONT, FONT_SIZE, hp_diff_string, value_color))
-    local scale = GetDamageScale(hp_diff)
-    self:SetScale(scale)
+    local font_size = GetFontSize(hp_diff)
+    self.text = self:AddChild(Text(BODYTEXTFONT, font_size, hp_diff_string, value_color))
     self:UpdateWhilePaused(false)
 end)
 

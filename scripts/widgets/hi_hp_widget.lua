@@ -12,8 +12,8 @@ local STATE_HOSTILE = 0
 local STATE_FRIEND = 1
 local STATE_NEUTRAL = 2
 local STATE_PLAYER = 3
-local FONT_SIZE = 50
-local FONT_MIN_SIZE = 10
+local FONT_SIZE_MAX = 50
+local FONT_SIZE_MIN = 10
 local TINT_HOSTILE = {0.75, 0.25, 0.25, 1}
 local TINT_FRIEND = {0.25, 0.75, 0.25, 1}
 local TINT_NEUTRAL = {0.75, 0.75, 0.75, 1}
@@ -29,7 +29,7 @@ local function GetScaledValues(value)
     local scale = math.log(clamped_value) / math.log(cap_max) * (result_max - result_min) + result_min
     local scale_x = math.max(math.floor(HP_SIZE_X * scale), BOX_BG_MIN_SIZE)
     local scale_y = math.max(math.floor(HP_SIZE_Y * scale), BOX_BG_MIN_SIZE)
-    local scale_font = math.max(FONT_SIZE * scale, FONT_MIN_SIZE)
+    local scale_font = math.max(math.floor(FONT_SIZE_MAX * scale), FONT_SIZE_MIN)
     return scale_x, scale_y, scale_font
 end
 
@@ -55,7 +55,7 @@ local HiHpWidget = Class(HiBaseWidget, function(self, hp, max_hp)
     self.offset = Vector3(0, -20, 0)
     self.hp_bar_size_x = HP_SIZE_X
     self.hp_bar_size_y = HP_SIZE_Y
-    self.text_size = FONT_SIZE
+    self.text_size = FONT_SIZE_MAX
     self.hp = 0
     self.state = STATE_NEUTRAL
     self.box_bg = self:AddChild(NineSlice("images/hp_bg.xml"))
