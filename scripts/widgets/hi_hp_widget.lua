@@ -64,14 +64,19 @@ local HiHpWidget = Class(HiBaseWidget, function(self, hp, max_hp)
     self.box:SetSize(self.hp_bar_size_x - BOX_INNER_PADDING, self.hp_bar_size_y - BOX_INNER_PADDING)
     self.text = self:AddChild(Text(BODYTEXTFONT, self.text_size, math.floor(hp), { 1, 1, 1, 1 }))
     self.text:SetPosition(0, -(self.hp_bar_size_y + self.text_size) * 0.5)
-    self:SetOpacity(HI_SETTINGS.data.hp_bar_opacity)
+    self:SetHpBarOpacity(HI_SETTINGS.data.hp_bar_opacity)
+    self:SetHpNumberOpacity(HI_SETTINGS.data.hp_number_opacity)
     self:UpdateHp(hp, max_hp)
     self:UpdateWhilePaused(false)
 end)
 
-function HiHpWidget:SetOpacity(a)
+function HiHpWidget:SetHpBarOpacity(a)
     self.box_bg:SetFadeAlpha(a)
     self.box:SetFadeAlpha(a)
+end
+
+function HiHpWidget:SetHpNumberOpacity(a)
+    self.text:SetFadeAlpha(a)
 end
 
 function HiHpWidget:SetImageTint(tint)
@@ -126,12 +131,12 @@ function HiHpWidget:UpdateState(force)
         elseif self.state == STATE_NEUTRAL then
             self:SetImageTint(TINT_NEUTRAL)
         end
-        self:SetOpacity(HI_SETTINGS.data.hp_bar_opacity)
     end
 end
 
 function HiHpWidget:ApplySettings()
-    self:SetOpacity(HI_SETTINGS.data.hp_bar_opacity)
+    self:SetHpBarOpacity(HI_SETTINGS.data.hp_bar_opacity)
+    self:SetHpNumberOpacity(HI_SETTINGS.data.hp_number_opacity)
 end
 
 function HiHpWidget:OnUpdate(dt)

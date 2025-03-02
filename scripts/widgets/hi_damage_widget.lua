@@ -49,6 +49,7 @@ local HiDamageWidget = Class(HiBaseWidget, function(self, hp_diff, type)
     end
     local font_size = GetFontSize(hp_diff)
     self.text = self:AddChild(Text(BODYTEXTFONT, font_size, hp_diff_string, value_color))
+    self:SetFadeAlpha(HI_SETTINGS.data.damage_number_opacity)
     self:UpdateWhilePaused(false)
 end)
 

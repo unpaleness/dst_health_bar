@@ -1,7 +1,9 @@
 local SETTINGS_FILE = "hi_settings"
 
 local DEFAULT_SETTINGS = {
-    hp_bar_opacity = 1
+    hp_number_opacity = 1,
+    hp_bar_opacity = 1,
+    damage_number_opacity = 1
 }
 
 local HiSettings = {
@@ -11,7 +13,8 @@ local HiSettings = {
 
 function HiSettings:UpdateWidgets()
     for _, widget in pairs(self.cached_hp_widgets) do
-        widget:SetOpacity(self.data.hp_bar_opacity)
+        widget:SetHpBarOpacity(self.data.hp_bar_opacity)
+        widget:SetHpNumberOpacity(self.data.hp_number_opacity)
     end
 end
 
@@ -26,8 +29,14 @@ function HiSettings:Load()
             return
         end
         local decoded_data = json.decode(data)
+        if decoded_data.hp_number_opacity ~= nil then
+            self.data.hp_number_opacity = decoded_data.hp_number_opacity
+        end
         if decoded_data.hp_bar_opacity ~= nil then
             self.data.hp_bar_opacity = decoded_data.hp_bar_opacity
+        end
+        if decoded_data.damage_number_opacity ~= nil then
+            self.data.damage_number_opacity = decoded_data.damage_number_opacity
         end
     end)
     self:UpdateWidgets()
