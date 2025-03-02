@@ -8,16 +8,14 @@ local HP_SIZE_Y = 20
 local BOX_BG_PADDING = 6
 local BOX_INNER_PADDING = 6
 local BOX_BG_MIN_SIZE = 6
-local STATE_HOSTILE = 0
-local STATE_FRIEND = 1
-local STATE_NEUTRAL = 2
-local STATE_PLAYER = 3
+
+local STATE_NEUTRAL = 1
+local STATE_FRIEND = 2
+local STATE_HOSTILE = 3
+local STATE_PLAYER = 4
+
 local FONT_SIZE_MAX = 50
 local FONT_SIZE_MIN = 10
-local TINT_HOSTILE = {0.75, 0.25, 0.25, 1}
-local TINT_FRIEND = {0.25, 0.75, 0.25, 1}
-local TINT_NEUTRAL = {0.75, 0.75, 0.75, 1}
-local TINT_PLAYER = {0.75, 0.25, 0.75, 1}
 
 local function GetScaledValues(value)
     -- Let's say 0.25 scale will be at value <= 1 and 1 scale will be at value >= 200
@@ -25,7 +23,8 @@ local function GetScaledValues(value)
     local cap_max = 20000
     local result_min = 0.25
     local result_max = 1
-    local clamped_value = math.min(cap_max, math.max(math.abs(value), cap_min))
+    -- local clamped_value = math.min(cap_max, math.max(math.abs(value), cap_min))
+    local clamped_value = math.clamp(math.abs(value), cap_min, cap_max)
     local scale = math.log(clamped_value) / math.log(cap_max) * (result_max - result_min) + result_min
     local scale_x = math.max(math.floor(HP_SIZE_X * scale), BOX_BG_MIN_SIZE)
     local scale_y = math.max(math.floor(HP_SIZE_Y * scale), BOX_BG_MIN_SIZE)
@@ -34,6 +33,9 @@ local function GetScaledValues(value)
 end
 
 local function GetHpWidgetState(target)
+    if target == nil then
+        return STATE_NEUTRAL
+    end
     if target:HasTag("player") then
         return STATE_PLAYER
     end
@@ -64,23 +66,13 @@ local HiHpWidget = Class(HiBaseWidget, function(self, hp, max_hp)
     self.box:SetSize(self.hp_bar_size_x - BOX_INNER_PADDING, self.hp_bar_size_y - BOX_INNER_PADDING)
     self.text = self:AddChild(Text(BODYTEXTFONT, self.text_size, math.floor(hp), { 1, 1, 1, 1 }))
     self.text:SetPosition(0, -(self.hp_bar_size_y + self.text_size) * 0.5)
-    self:SetHpBarOpacity(HI_SETTINGS.data.hp_bar_opacity)
-    self:SetHpNumberOpacity(HI_SETTINGS.data.hp_number_opacity)
+    self:ApplySettings()
     self:UpdateHp(hp, max_hp)
     self:UpdateWhilePaused(false)
 end)
 
-function HiHpWidget:SetHpBarOpacity(a)
-    self.box_bg:SetFadeAlpha(a)
-    self.box:SetFadeAlpha(a)
-end
-
-function HiHpWidget:SetHpNumberOpacity(a)
-    self.text:SetFadeAlpha(a)
-end
-
 function HiHpWidget:SetImageTint(tint)
-    self.box:SetTint(tint[1], tint[2], tint[3], tint[4])
+    self.box:SetTint(tint[1], tint[2], tint[3], tint[4] * HI_SETTINGS:GetHealthBarOpacity())
 end
 
 function HiHpWidget:SetTarget(target)
@@ -122,21 +114,14 @@ function HiHpWidget:UpdateState(force)
     local state = GetHpWidgetState(self.target)
     if state ~= self.state or force then
         self.state = state
-        if self.state == STATE_PLAYER then
-            self:SetImageTint(TINT_PLAYER)
-        elseif self.state == STATE_HOSTILE then
-            self:SetImageTint(TINT_HOSTILE)
-        elseif self.state == STATE_FRIEND then
-            self:SetImageTint(TINT_FRIEND)
-        elseif self.state == STATE_NEUTRAL then
-            self:SetImageTint(TINT_NEUTRAL)
-        end
+        self:SetImageTint(HI_SETTINGS:GetColour(self.state))
     end
 end
 
 function HiHpWidget:ApplySettings()
-    self:SetHpBarOpacity(HI_SETTINGS.data.hp_bar_opacity)
-    self:SetHpNumberOpacity(HI_SETTINGS.data.hp_number_opacity)
+    self.box_bg:SetFadeAlpha(HI_SETTINGS:GetHealthBarOpacity())
+    self.text:SetFadeAlpha(HI_SETTINGS:GetHealthNumberOpacity())
+    self:UpdateState(true)
 end
 
 function HiHpWidget:OnUpdate(dt)

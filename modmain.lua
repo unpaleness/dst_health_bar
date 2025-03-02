@@ -67,7 +67,7 @@ local function HiClientTryUpdateHpWidget(inst)
 end
 
 local function HiClientTrySpawnDamageWidget(inst)
-    if GLOBAL.TheNet:IsDedicated() or GLOBAL.ThePlayer == nil or inst._hi_current_health_client == nil then
+    if GLOBAL.TheNet:IsDedicated() or GLOBAL.ThePlayer == nil or inst._hi_current_health_client == nil or not GLOBAL.CanEntitySeeTarget(GLOBAL.ThePlayer, inst) then
         return
     end
     local damage_widget = GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiDamageWidget(inst._hi_current_health_replicated

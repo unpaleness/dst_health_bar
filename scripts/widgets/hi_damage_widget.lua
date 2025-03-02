@@ -17,7 +17,8 @@ local function GetFontSize(value)
     local cap_max = 200
     local result_min = 0.33
     local result_max = 1
-    local clamped_value = math.min(cap_max, math.max(math.abs(value), cap_min))
+    -- local clamped_value = math.min(cap_max, math.max(math.abs(value), cap_min))
+    local clamped_value = math.clamp(math.abs(value), cap_min, cap_max)
     local scale = math.log(clamped_value) / math.log(cap_max) * (result_max - result_min) + result_min
     return math.max(math.floor(FONT_SIZE_MAX * scale), FONT_SIZE_MIN)
 end
@@ -49,7 +50,7 @@ local HiDamageWidget = Class(HiBaseWidget, function(self, hp_diff, type)
     end
     local font_size = GetFontSize(hp_diff)
     self.text = self:AddChild(Text(BODYTEXTFONT, font_size, hp_diff_string, value_color))
-    self:SetFadeAlpha(HI_SETTINGS.data.damage_number_opacity)
+    self:SetFadeAlpha(HI_SETTINGS:GetDamageNumberOpacity())
     self:UpdateWhilePaused(false)
 end)
 

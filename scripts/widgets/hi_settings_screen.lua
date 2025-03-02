@@ -7,7 +7,7 @@ local PADDING_VERTICAL_SMALL = 50
 local WIDTH = 600
 local FONT_SIZE = 40
 local OPACITY_OPTIONS = {
-    { text = "0%",   data = 0 },
+    { text = "0%",   data = 0.0 },
     { text = "10%",  data = 0.1 },
     { text = "20%",  data = 0.2 },
     { text = "30%",  data = 0.3 },
@@ -17,12 +17,32 @@ local OPACITY_OPTIONS = {
     { text = "70%",  data = 0.7 },
     { text = "80%",  data = 0.8 },
     { text = "90%",  data = 0.9 },
-    { text = "100%", data = 1 },
+    { text = "100%", data = 1.0 },
 }
+
 local OPACITY_TITLE = "Opacity"
-local HP_NUMBER_OPACITY_TITLE = "HP number opacity"
-local HP_BAR_OPACITY_TITLE = "HP bar opacity"
-local DAMAGE_NUMBER_OPACITY_TITLE = "Damage number opacity"
+local COLOUR_TITLE = "Health bar colour"
+
+local OPACITY_SPINNDERS_DATA = {
+    { text = "Health number", index = 1, offset_y = PADDING_VERTICAL_BIG },
+    { text = "Health bar",    index = 2, offset_y = PADDING_VERTICAL_SMALL },
+    { text = "Damage number", index = 3, offset_y = PADDING_VERTICAL_SMALL },
+}
+
+local COLOUR_SPINNERS_DATA = {
+    { text = "Neutral", index = 1, offset_y = PADDING_VERTICAL_BIG },
+    { text = "Friend",  index = 2, offset_y = PADDING_VERTICAL_SMALL },
+    { text = "Hostile", index = 3, offset_y = PADDING_VERTICAL_SMALL },
+    { text = "Player",  index = 4, offset_y = PADDING_VERTICAL_SMALL },
+}
+
+local function MakeColourOptions()
+    local options = {}
+    for i, v in ipairs(HI_SETTINGS:GetAllColours()) do
+        table.insert(options, { text = v.text, data = i })
+    end
+    return options
+end
 
 local HiSettingsScreen = Class(Screen, function(self)
     Screen._ctor(self, "HiSettingsScreen")
@@ -32,30 +52,8 @@ local HiSettingsScreen = Class(Screen, function(self)
     self.elements = {}
     self.size_y = 0
 
-    -- Title opacity
-    self.title_opacity = self:AddChild(Text(CHATFONT, FONT_SIZE, OPACITY_TITLE, UICOLOURS.GOLD))
-    self:RegisterElement(self.title_opacity, Vector3(0, 0, 0))
-
-    -- Spinner hp number opacity
-    self.spinner_hp_number_opacity = self:AddChild(TEMPLATES.LabelSpinner(HP_NUMBER_OPACITY_TITLE, OPACITY_OPTIONS, 400, 150, nil, nil, nil, FONT_SIZE, -75, function(selected, old)
-        HI_SETTINGS.data.hp_number_opacity = selected
-    end))
-    self.spinner_hp_number_opacity.spinner:SetSelected(HI_SETTINGS.data.hp_number_opacity)
-    self:RegisterElement(self.spinner_hp_number_opacity, Vector3(0, PADDING_VERTICAL_BIG, 0))
-
-    -- Spinner hp bar opacity
-    self.spinner_hp_bar_opacity = self:AddChild(TEMPLATES.LabelSpinner(HP_BAR_OPACITY_TITLE, OPACITY_OPTIONS, 400, 150, nil, nil, nil, FONT_SIZE, -75, function(selected, old)
-        HI_SETTINGS.data.hp_bar_opacity = selected
-    end))
-    self.spinner_hp_bar_opacity.spinner:SetSelected(HI_SETTINGS.data.hp_bar_opacity)
-    self:RegisterElement(self.spinner_hp_bar_opacity, Vector3(0, PADDING_VERTICAL_SMALL, 0))
-
-    -- Spinner damage number opacity
-    self.spinner_damage_number_opacity = self:AddChild(TEMPLATES.LabelSpinner(DAMAGE_NUMBER_OPACITY_TITLE, OPACITY_OPTIONS, 400, 150, nil, nil, nil, FONT_SIZE, -75, function(selected, old)
-        HI_SETTINGS.data.damage_number_opacity = selected
-    end))
-    self.spinner_damage_number_opacity.spinner:SetSelected(HI_SETTINGS.data.damage_number_opacity)
-    self:RegisterElement(self.spinner_damage_number_opacity, Vector3(0, PADDING_VERTICAL_SMALL, 0))
+    self:AddOpacitySpinners()
+    self:AddColourSpinners()
 
     -- Button apply
     self.button_apply = self:AddChild(TEMPLATES.StandardButton(
@@ -78,6 +76,40 @@ local HiSettingsScreen = Class(Screen, function(self)
 
     SetAutopaused(true)
 end)
+
+function HiSettingsScreen:AddOpacitySpinners()
+    -- Title opacity
+    local title = self:AddChild(Text(CHATFONT, FONT_SIZE, OPACITY_TITLE, UICOLOURS.GOLD))
+    self:RegisterElement(title, Vector3(0, 0, 0))
+
+    self.opacity_spinners = {}
+    for i, v in ipairs(OPACITY_SPINNDERS_DATA) do
+        local spinner = self:AddChild(TEMPLATES.LabelSpinner(v.text, OPACITY_OPTIONS, 400, 150, nil, nil, nil, FONT_SIZE, -75))
+        spinner.spinner:SetOnChangedFn(function(selected, old)
+            HI_SETTINGS:SetOpacity(v.index, selected)
+        end)
+        spinner.spinner:SetSelected(HI_SETTINGS:GetOpacity(v.index))
+        self:RegisterElement(spinner, Vector3(0, v.offset_y, 0))
+    end
+end
+
+function HiSettingsScreen:AddColourSpinners()
+    -- Title colour
+    local title = self:AddChild(Text(CHATFONT, FONT_SIZE, COLOUR_TITLE, UICOLOURS.GOLD))
+    self:RegisterElement(title, Vector3(0, PADDING_VERTICAL_BIG, 0))
+
+    self.colour_spinners = {}
+    for i, v in ipairs(COLOUR_SPINNERS_DATA) do
+        local spinner = self:AddChild(TEMPLATES.LabelSpinner(v.text, MakeColourOptions(), 400, 150, nil, nil, nil, FONT_SIZE, -75))
+        spinner.spinner:SetOnChangedFn(function(selected, old)
+            HI_SETTINGS:SetColourIndex(v.index, selected)
+            spinner.spinner:SetTextColour(HI_SETTINGS:GetColour(v.index))
+        end)
+        spinner.spinner:SetSelected(HI_SETTINGS:GetColourIndex(v.index))
+        spinner.spinner:SetTextColour(HI_SETTINGS:GetColour(v.index))
+        self:RegisterElement(spinner, Vector3(0, v.offset_y, 0))
+    end
+end
 
 function HiSettingsScreen:RegisterElement(element, offset)
     if element == nil then
