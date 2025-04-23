@@ -14,6 +14,13 @@ local STATE_FRIEND = 2
 local STATE_HOSTILE = 3
 local STATE_PLAYER = 4
 
+local VISIBILITY_INDEX_ME = 1
+local VISIBILITY_INDEX_OTHER_PLAYER = 2
+local VISIBILITY_INDEX_BOSS = 3
+local VISIBILITY_INDEX_STRUCTURE = 4
+local VISIBILITY_INDEX_OTHER = 5
+local VISIBILITY_INDEX_WALL_BOAT = 6
+
 local FONT_SIZE_MAX = 50
 local FONT_SIZE_MIN = 10
 
@@ -60,6 +67,9 @@ local HiHpWidget = Class(HiBaseWidget, function(self, hp, max_hp)
     self.text_size = FONT_SIZE_MAX
     self.hp = 0
     self.state = STATE_NEUTRAL
+    self.is_boss = false
+    self.is_structure = false
+    self.is_wall_or_boat = false
     self.box_bg = self:AddChild(NineSlice("images/hp_bg.xml"))
     self.box_bg:SetSize(self.hp_bar_size_x - BOX_BG_PADDING, self.hp_bar_size_y - BOX_BG_PADDING)
     self.box = self:AddChild(NineSlice("images/hp_white.xml"))
@@ -76,6 +86,9 @@ function HiHpWidget:SetImageTint(tint)
 end
 
 function HiHpWidget:SetTarget(target)
+    self.is_boss = target:HasTag("epic")
+    self.is_structure = target:HasTag("structure")
+    self.is_wall_or_boat = target:HasTag("boat") or target:HasTag("boatbumper") or target:HasTag("wall")
     HiBaseWidget.SetTarget(self, target)
     self:UpdateState(true)
 end
@@ -124,11 +137,30 @@ function HiHpWidget:ApplySettings()
     self:UpdateState(true)
 end
 
+function HiHpWidget:IsVisibleBySettings()
+    if self.state == STATE_PLAYER then
+        if self.target == ThePlayer then
+            return HI_SETTINGS:GetVisibility(VISIBILITY_INDEX_ME)
+        else
+            return HI_SETTINGS:GetVisibility(VISIBILITY_INDEX_OTHER_PLAYER)
+        end
+    else
+        if self.is_boss then
+            return HI_SETTINGS:GetVisibility(VISIBILITY_INDEX_BOSS)
+        elseif self.is_structure then
+            return HI_SETTINGS:GetVisibility(VISIBILITY_INDEX_STRUCTURE)
+        elseif self.is_wall_or_boat then
+            return HI_SETTINGS:GetVisibility(VISIBILITY_INDEX_WALL_BOAT)
+        else
+            return HI_SETTINGS:GetVisibility(VISIBILITY_INDEX_OTHER)
+        end
+    end
+end
+
 function HiHpWidget:OnUpdate(dt)
     HiBaseWidget.OnUpdate(self, dt)
 
-    local is_target_visible = CanEntitySeeTarget(ThePlayer, self.target)
-    if is_target_visible then
+    if CanEntitySeeTarget(ThePlayer, self.target) and self:IsVisibleBySettings() then
         self:Show()
     else
         self:Hide()

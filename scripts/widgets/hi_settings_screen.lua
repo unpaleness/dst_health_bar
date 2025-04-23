@@ -4,7 +4,8 @@ local TEMPLATES = require "widgets/redux/templates"
 
 local PADDING_VERTICAL_BIG = 75
 local PADDING_VERTICAL_SMALL = 50
-local WIDTH = 600
+local WIDTH = 800
+local HEIGHT = 600
 local FONT_SIZE = 40
 local OPACITY_OPTIONS = {
     { text = "0%",   data = 0.0 },
@@ -22,6 +23,7 @@ local OPACITY_OPTIONS = {
 
 local OPACITY_TITLE = "Opacity"
 local COLOUR_TITLE = "Health bar colour"
+local VISIBILITIES_TITLE = "Health bar visibility"
 
 local OPACITY_SPINNDERS_DATA = {
     { text = "Health number", index = 1, offset_y = PADDING_VERTICAL_BIG },
@@ -34,6 +36,15 @@ local COLOUR_SPINNERS_DATA = {
     { text = "Friend",  index = 2, offset_y = PADDING_VERTICAL_SMALL },
     { text = "Hostile", index = 3, offset_y = PADDING_VERTICAL_SMALL },
     { text = "Player",  index = 4, offset_y = PADDING_VERTICAL_SMALL },
+}
+
+local VISIBILITY_CHECKBOXES_DATA = {
+    { text = "Me", offset_y = PADDING_VERTICAL_BIG },
+    { text = "Other players", offset_y = PADDING_VERTICAL_SMALL },
+    { text = "Bosses", offset_y = PADDING_VERTICAL_SMALL },
+    { text = "Structures", offset_y = PADDING_VERTICAL_SMALL },
+    { text = "Other entities", offset_y = PADDING_VERTICAL_SMALL },
+    { text = "Walls, boats, bumpers", offset_y = PADDING_VERTICAL_SMALL },
 }
 
 local function MakeColourOptions()
@@ -50,10 +61,17 @@ local HiSettingsScreen = Class(Screen, function(self)
     self.bg:SetVAnchor(ANCHOR_MIDDLE)
     self.bg:SetHAnchor(ANCHOR_MIDDLE)
     self.elements = {}
-    self.size_y = 0
 
+    self.size_y = 0
     self:AddOpacitySpinners()
     self:AddColourSpinners()
+    local column1_y = self.size_y
+
+    self.size_y = 0
+    self:AddVisibilityCheckboxes()
+    local column2_y = self.size_y
+
+    self.size_y = math.max(column1_y, column2_y)
 
     -- Button apply
     self.button_apply = self:AddChild(TEMPLATES.StandardButton(
@@ -80,7 +98,7 @@ end)
 function HiSettingsScreen:AddOpacitySpinners()
     -- Title opacity
     local title = self:AddChild(Text(CHATFONT, FONT_SIZE, OPACITY_TITLE, UICOLOURS.GOLD))
-    self:RegisterElement(title, Vector3(0, 0, 0))
+    self:RegisterElement(title, Vector3(-200, 0, 0))
 
     self.opacity_spinners = {}
     for i, v in ipairs(OPACITY_SPINNDERS_DATA) do
@@ -89,14 +107,14 @@ function HiSettingsScreen:AddOpacitySpinners()
             HI_SETTINGS:SetOpacity(v.index, selected)
         end)
         spinner.spinner:SetSelected(HI_SETTINGS:GetOpacity(v.index))
-        self:RegisterElement(spinner, Vector3(0, v.offset_y, 0))
+        self:RegisterElement(spinner, Vector3(-200, v.offset_y, 0))
     end
 end
 
 function HiSettingsScreen:AddColourSpinners()
     -- Title colour
     local title = self:AddChild(Text(CHATFONT, FONT_SIZE, COLOUR_TITLE, UICOLOURS.GOLD))
-    self:RegisterElement(title, Vector3(0, PADDING_VERTICAL_BIG, 0))
+    self:RegisterElement(title, Vector3(-200, PADDING_VERTICAL_BIG, 0))
 
     self.colour_spinners = {}
     for i, v in ipairs(COLOUR_SPINNERS_DATA) do
@@ -107,7 +125,23 @@ function HiSettingsScreen:AddColourSpinners()
         end)
         spinner.spinner:SetSelected(HI_SETTINGS:GetColourIndex(v.index))
         spinner.spinner:SetTextColour(HI_SETTINGS:GetColour(v.index))
-        self:RegisterElement(spinner, Vector3(0, v.offset_y, 0))
+        self:RegisterElement(spinner, Vector3(-200, v.offset_y, 0))
+    end
+end
+
+function HiSettingsScreen:AddVisibilityCheckboxes()
+    -- Title visibilities
+    local title = self:AddChild(Text(CHATFONT, FONT_SIZE, VISIBILITIES_TITLE, UICOLOURS.GOLD))
+    self:RegisterElement(title, Vector3(200, PADDING_VERTICAL_BIG, 0))
+
+    for i, v in ipairs(VISIBILITY_CHECKBOXES_DATA) do
+        local checkbox = self:AddChild(TEMPLATES.LabelCheckbox(function(w)
+            local new_visibility = not HI_SETTINGS:GetVisibility(i)
+            HI_SETTINGS:SetVisibility(i, new_visibility)
+            w.checked = new_visibility
+            w:Refresh()
+        end, HI_SETTINGS:GetVisibility(i), v.text))
+        self:RegisterElement(checkbox, Vector3(200, v.offset_y, 0))
     end
 end
 

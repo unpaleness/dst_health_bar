@@ -19,11 +19,7 @@ end
 -- Client methods
 
 local function HiClientShouldShowHp(inst)
-    return not inst:IsAsleep()
-		and not inst:HasTag("INLIMBO")
-		and not inst:HasTag("boat")
-		and not inst:HasTag("boatbumper")
-		and not inst:HasTag("wall")
+    return not inst:IsAsleep() and not inst:HasTag("INLIMBO")
 end
 
 local function HiClientTryCreateHpWidget(inst)
@@ -70,8 +66,7 @@ local function HiClientTrySpawnDamageWidget(inst)
     if GLOBAL.TheNet:IsDedicated() or GLOBAL.ThePlayer == nil or inst._hi_current_health_client == nil or not GLOBAL.CanEntitySeeTarget(GLOBAL.ThePlayer, inst) then
         return
     end
-    local damage_widget = GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiDamageWidget(inst._hi_current_health_replicated
-    :value() - inst._hi_current_health_client))
+    local damage_widget = GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiDamageWidget(inst._hi_current_health_replicated:value() - inst._hi_current_health_client))
     damage_widget:SetTarget(inst)
 end
 
