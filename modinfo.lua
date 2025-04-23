@@ -3,9 +3,10 @@ description = [[
 Features:
 - health bars with dynamic colour coding
 - damage indicators
+- in-game settings
 ]]
 author = "unpaleness"
-version = "0.0.11"
+version = "0.0.12"
 
 steam_description = [[
 [b]A very base health and damage indicators[/b]
@@ -30,6 +31,8 @@ steam_description = [[
 [*]make damage indicators colour based on damage type (like in RPGs)
 [*]add more customization for clients
 [/list]
+
+Feel free to express any feedback. I keep source open here: https://github.com/unpaleness/dst_health_bar
 ]]
 
 forumthread = ""
