@@ -1,5 +1,6 @@
 name = "Health indicators"
 description = [[
+Version: 0.0.13
 Features:
 - health bars with dynamic colour coding
 - damage indicators
