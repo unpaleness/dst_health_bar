@@ -6,7 +6,7 @@ Features:
 - in-game settings
 ]]
 author = "unpaleness"
-version = "0.0.12"
+version = "0.0.13"
 
 steam_description = [[
 [b]A very base health and damage indicators[/b]
