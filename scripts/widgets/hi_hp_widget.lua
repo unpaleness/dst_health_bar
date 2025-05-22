@@ -46,7 +46,7 @@ local function GetHpWidgetState(target)
     if target:HasTag("player") then
         return STATE_PLAYER
     end
-    local player_id = ThePlayer.userid
+    local player_id = ThePlayer and ThePlayer.userid or nil
     local follow_target_value = target._hi_follow_target_replicated:value()
     if follow_target_value == player_id or target:HasTag("companion") then
         return STATE_FRIEND

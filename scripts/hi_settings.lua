@@ -22,6 +22,7 @@ local DEFAULT_SETTINGS = {
 local HiSettings = {
     data = DEFAULT_SETTINGS,
     cached_hp_widgets = {},
+    cached_hp_widgets_num = 0,
 }
 
 function HiSettings:GetHealthNumberOpacity()

@@ -33,11 +33,12 @@ local function HiClientTryCreateHpWidget(inst)
     if widget ~= nil then
         return
     end
-    -- print("HiClientTryCreateHpWidget: {", inst, "}")
     widget = GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiHpWidget(inst._hi_current_health_client, inst._hi_max_health_client))
     widget:SetTarget(inst)
     inst._hi_hp_widget = widget
     GLOBAL.HI_SETTINGS.cached_hp_widgets[inst.GUID] = widget
+    GLOBAL.HI_SETTINGS.cached_hp_widgets_num = GLOBAL.HI_SETTINGS.cached_hp_widgets_num + 1
+    -- print("HiClientTryCreateHpWidget: {", inst, "}, cached widgets: ", GLOBAL.HI_SETTINGS.cached_hp_widgets_num)
 end
 
 local function HiClientTryRemoveHpWidget(inst)
@@ -48,10 +49,13 @@ local function HiClientTryRemoveHpWidget(inst)
     if widget == nil then
         return
     end
-    -- print("HiClientTryRemoveHpWidget: {", inst, "}, hp: ", widget.hp, ", state: ", widget.state, ", scale: ", widget.scale, ", pos: ", widget:GetPosition())
-    widget:Kill()
+    if widget.inst and widget.inst:IsValid() then
+        widget:Kill()
+    end
     inst._hi_hp_widget = nil
     GLOBAL.HI_SETTINGS.cached_hp_widgets[inst.GUID] = nil
+    GLOBAL.HI_SETTINGS.cached_hp_widgets_num = GLOBAL.HI_SETTINGS.cached_hp_widgets_num - 1
+    -- print("HiClientTryRemoveHpWidget: {", inst, "}, cached widgets: ", GLOBAL.HI_SETTINGS.cached_hp_widgets_num)
 end
 
 local function HiClientTryUpdateHpWidget(inst)
@@ -132,11 +136,17 @@ end
 
 local function HiClientOnEntityActive(inst)
     -- print("HiClientOnEntityActive: {", inst, "}")
+    if inst == nil or not inst:IsValid() then
+        return
+    end
 	HiClientOnHealthDirty(inst)
 end
 
 local function HiClientOnEntityPassive(inst)
     -- print("HiClientOnEntityPassive: {", inst, "}")
+    if inst == nil or not inst:IsValid() then
+        return
+    end
     inst._hi_current_health_client = nil
     HiClientTryRemoveHpWidget(inst)
 end
@@ -269,14 +279,14 @@ AddPrefabPostInitAny(function(inst)
         -- print("AddPrefabPostInitAny: {", inst, "}: setting up server subscriptions")
         inst:ListenForEvent("healthdelta", HiServerOnHealthDelta)
         inst:ListenForEvent("startfollowing", HiServerOnStartFollowing)
-		inst:ListenForEvent("stopfollowing", HiServerOnStopFollowing)
+        inst:ListenForEvent("stopfollowing", HiServerOnStopFollowing)
         -- inst:ListenForEvent("attacked", HiServerOnAttacked)
     end
     if not GLOBAL.TheNet:IsDedicated() then
         -- print("AddPrefabPostInitAny: {", inst, "}: setting up client subscriptions")
         -- introduce this value as the last value stored by client to calculate health diff upon replicated health value update
         inst._hi_current_health_client = nil
-		inst._hi_max_health_client = nil
+        inst._hi_max_health_client = nil
         inst:ListenForEvent("exitlimbo", HiClientOnExitLimbo)
         inst:ListenForEvent("entitywake", HiClientOnWake)
         inst:ListenForEvent("enterlimbo", HiClientOnEnterLimbo)
@@ -285,8 +295,8 @@ AddPrefabPostInitAny(function(inst)
         HiClientOnEntityActive(inst)
         inst:ListenForEvent("hi_on_current_health_dirty", HiClientOnHealthDirty)
         inst:ListenForEvent("hi_on_max_health_dirty", HiClientOnHealthDirty)
-		inst:ListenForEvent("hi_on_combat_target_dirty", HiClientOnCombatTargetDirty)
-		inst:ListenForEvent("hi_on_follow_target_dirty", HiClientOnFollowTargetDirty)
+        inst:ListenForEvent("hi_on_combat_target_dirty", HiClientOnCombatTargetDirty)
+        inst:ListenForEvent("hi_on_follow_target_dirty", HiClientOnFollowTargetDirty)
         -- inst:ListenForEvent("hi_on_combined_damage_string_dirty", HiClientOnCombinedDamageStringDirty)
     end
 end)
