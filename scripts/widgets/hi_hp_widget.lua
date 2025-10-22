@@ -21,6 +21,7 @@ local VISIBILITY_INDEX_STRUCTURE = 4
 local VISIBILITY_INDEX_OTHER = 5
 local VISIBILITY_INDEX_WALL_BOAT = 6
 local VISIBILITY_INDEX_HOSTILE = 7
+local VISIBILITY_INDEX_FRIEND = 8
 
 local FONT_SIZE_MAX = 50
 local FONT_SIZE_MIN = 10
@@ -154,6 +155,8 @@ function HiHpWidget:IsVisibleBySettings()
             return HI_SETTINGS:GetVisibility(VISIBILITY_INDEX_WALL_BOAT)
         elseif self.state == STATE_HOSTILE then
             return HI_SETTINGS:GetVisibility(VISIBILITY_INDEX_HOSTILE)
+        elseif self.state == STATE_FRIEND then
+            return HI_SETTINGS:GetVisibility(VISIBILITY_INDEX_FRIEND)
         else
             return HI_SETTINGS:GetVisibility(VISIBILITY_INDEX_OTHER)
         end

@@ -15,8 +15,8 @@ local DEFAULT_SETTINGS = {
     opacities = {1, 1, 1},
     -- neutral, friend, hostile, player
     colours = {7, 2, 1, 5},
-    -- current player, other players, bosses, structures, other entities, all other normally hidden entities (walls, boats), enemies
-    visibilities = {true, true, true, true, true, false, true},
+    -- current player, other players, bosses, structures, other entities, all other normally hidden entities (walls, boats), enemies, friends
+    visibilities = {true, true, true, true, true, false, true, true},
 }
 
 local HiSettings = {

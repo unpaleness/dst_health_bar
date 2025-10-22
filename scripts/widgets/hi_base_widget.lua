@@ -13,6 +13,7 @@ local HiBaseWidget = Class(Widget, function(self)
 	self.target = nil
     self.offset = Vector3(0, 0, 0)
 
+    self:SetClickable(false)
     self:UpdateWhilePaused(false)
     self:StartUpdating()
 end)
