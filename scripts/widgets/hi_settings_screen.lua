@@ -45,6 +45,7 @@ local VISIBILITY_CHECKBOXES_DATA = {
     { text = "Structures", offset_y = PADDING_VERTICAL_SMALL },
     { text = "Other entities", offset_y = PADDING_VERTICAL_SMALL },
     { text = "Walls, boats, bumpers", offset_y = PADDING_VERTICAL_SMALL },
+    { text = "Enemies", offset_y = PADDING_VERTICAL_SMALL },
 }
 
 local function MakeColourOptions()
