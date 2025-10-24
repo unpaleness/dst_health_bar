@@ -1,13 +1,13 @@
 name = "Health indicators"
 description = [[
-Version: 0.0.16
+Version: 0.0.17
 Features:
 - health bars with dynamic colour coding
 - damage indicators
 - in-game settings
 ]]
 author = "unpaleness"
-version = "0.0.16"
+version = "0.0.17"
 
 steam_description = [[
 [b]A very base health and damage indicators[/b]

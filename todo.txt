@@ -8,13 +8,13 @@ TASKS
 +DONE - add options for other elements: hp figures opacity, damage opacity
 +DONE - add options to specify visibility of HP bar for specific groups of entities (players, bosses, structures, ...)
 +DONE - add separate mark for neutrals and enemies
++DONE - add possibility to configure mod using controller
 - add color (and probably icon) to different damage types (pack damage in chunks by type to save brandwidth)
 - show somehow resistance, armor or affinity (that you deal less or more damage) (TOO HARD)
 - show damage on hp bar with temp indicator and animation
 - probably floor player HP and ceil all other's
 - somehow highlight enemy that is going to target players
 !- add option to hide hp bars out of combat
-!- add possibility to configure mod in main menu (for steam deck)
 !- add configurable size of HP bar
 !- add option to show max hp
 !- add option to show hp above entities
