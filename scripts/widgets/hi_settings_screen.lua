@@ -141,6 +141,7 @@ local HiSettingsScreen = Class(Screen, function(self)
 end)
 
 function HiSettingsScreen:Close()
+    HI_SETTINGS:Save()
     TheFrontEnd:PopScreen()
     SetAutopaused(false)
 end
