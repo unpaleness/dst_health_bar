@@ -75,27 +75,75 @@ local HiSettingsScreen = Class(Screen, function(self)
 
     self.size_y = math.max(column1_y, column2_y)
 
-    -- Button apply
-    self.button_apply = self:AddChild(TEMPLATES.StandardButton(
-        function()
-            HI_SETTINGS:Save()
-        end, "Apply", {150, 75}))
-    self:RegisterElement(self.button_apply, Vector3(-100, PADDING_VERTICAL_BIG, 0))
-
-    self.size_y = self.size_y - PADDING_VERTICAL_BIG
-
     -- Button close
     self.button_close = self:AddChild(TEMPLATES.StandardButton(
         function()
-            TheFrontEnd:PopScreen()
-            SetAutopaused(false)
+            self:Close()
         end, "Close", {150, 75}))
-    self:RegisterElement(self.button_close, Vector3(100, PADDING_VERTICAL_BIG, 0))
+    self:RegisterElement(self.button_close, Vector3(0, PADDING_VERTICAL_BIG, 0))
 
     self:FinalizeElements()
 
+    self.defaut_focus = self.button_close
+    self.last_focus = self.button_close
+
+    for i, v in ipairs(self.opacity_spinners) do
+        if (i > 1) then
+            v:SetFocusChangeDir(MOVE_UP, self.opacity_spinners[i - 1])
+        end
+        if (i < #self.opacity_spinners) then
+            v:SetFocusChangeDir(MOVE_DOWN, self.opacity_spinners[i + 1])
+        end
+        if i == #self.opacity_spinners then
+            v:SetFocusChangeDir(MOVE_DOWN, self.colour_spinners[1])
+        end
+        local right_index = (i < #self.visibility_checkboxes) and i or #self.visibility_checkboxes
+        v:SetFocusChangeDir(MOVE_RIGHT, self.visibility_checkboxes[right_index])
+    end
+
+    for i, v in ipairs(self.colour_spinners) do
+        if (i > 1) then
+            v:SetFocusChangeDir(MOVE_UP, self.colour_spinners[i - 1])
+        end
+        if (i < #self.colour_spinners) then
+            v:SetFocusChangeDir(MOVE_DOWN, self.colour_spinners[i + 1])
+        end
+        if i == #self.colour_spinners then
+            v:SetFocusChangeDir(MOVE_DOWN, self.button_close)
+        end
+        if i == 1 then
+            v:SetFocusChangeDir(MOVE_UP, self.opacity_spinners[#self.opacity_spinners])
+        end
+        local right_index = (i + #self.opacity_spinners < #self.visibility_checkboxes) and i + #self.opacity_spinners or #self.visibility_checkboxes
+        v:SetFocusChangeDir(MOVE_RIGHT, self.visibility_checkboxes[right_index])
+    end
+
+    for i, v in ipairs(self.visibility_checkboxes) do
+        if (i > 1) then
+            v:SetFocusChangeDir(MOVE_UP, self.visibility_checkboxes[i - 1])
+        end
+        if (i < #self.visibility_checkboxes) then
+            v:SetFocusChangeDir(MOVE_DOWN, self.visibility_checkboxes[i + 1])
+        end
+        if i == #self.visibility_checkboxes then
+            v:SetFocusChangeDir(MOVE_DOWN, self.button_close)
+        end
+        local left_table = (i <= #self.opacity_spinners) and self.opacity_spinners or self.colour_spinners
+        local left_index = (i <= #self.opacity_spinners) and i or ((i <= #self.opacity_spinners + #self.colour_spinners) and i - #self.opacity_spinners or #self.colour_spinners)
+        v:SetFocusChangeDir(MOVE_LEFT, left_table[left_index])
+    end
+
+    self.button_close:SetFocusChangeDir(MOVE_LEFT, self.colour_spinners[#self.colour_spinners])
+    self.button_close:SetFocusChangeDir(MOVE_RIGHT, self.visibility_checkboxes[#self.visibility_checkboxes])
+    self.button_close:SetFocusChangeDir(MOVE_UP, self.colour_spinners[#self.colour_spinners])
+
     SetAutopaused(true)
 end)
+
+function HiSettingsScreen:Close()
+    TheFrontEnd:PopScreen()
+    SetAutopaused(false)
+end
 
 function HiSettingsScreen:AddOpacitySpinners()
     -- Title opacity
@@ -109,6 +157,7 @@ function HiSettingsScreen:AddOpacitySpinners()
             HI_SETTINGS:SetOpacity(v.index, selected)
         end)
         spinner.spinner:SetSelected(HI_SETTINGS:GetOpacity(v.index))
+        table.insert(self.opacity_spinners, spinner)
         self:RegisterElement(spinner, Vector3(-200, v.offset_y, 0))
     end
 end
@@ -127,6 +176,7 @@ function HiSettingsScreen:AddColourSpinners()
         end)
         spinner.spinner:SetSelected(HI_SETTINGS:GetColourIndex(v.index))
         spinner.spinner:SetTextColour(HI_SETTINGS:GetColour(v.index))
+        table.insert(self.colour_spinners, spinner)
         self:RegisterElement(spinner, Vector3(-200, v.offset_y, 0))
     end
 end
@@ -134,8 +184,9 @@ end
 function HiSettingsScreen:AddVisibilityCheckboxes()
     -- Title visibilities
     local title = self:AddChild(Text(CHATFONT, FONT_SIZE, VISIBILITIES_TITLE, UICOLOURS.GOLD))
-    self:RegisterElement(title, Vector3(200, PADDING_VERTICAL_BIG, 0))
+    self:RegisterElement(title, Vector3(200, 0, 0))
 
+    self.visibility_checkboxes = {}
     for i, v in ipairs(VISIBILITY_CHECKBOXES_DATA) do
         local checkbox = self:AddChild(TEMPLATES.LabelCheckbox(function(w)
             local new_visibility = not HI_SETTINGS:GetVisibility(i)
@@ -143,6 +194,7 @@ function HiSettingsScreen:AddVisibilityCheckboxes()
             w.checked = new_visibility
             w:Refresh()
         end, HI_SETTINGS:GetVisibility(i), v.text))
+        table.insert(self.visibility_checkboxes, checkbox)
         self:RegisterElement(checkbox, Vector3(200, v.offset_y, 0))
     end
 end
@@ -171,6 +223,15 @@ function HiSettingsScreen:FinalizeElements()
         element:SetPosition(element_position)
     end
     self.bg:SetSize(WIDTH, self.size_y + PADDING_VERTICAL_SMALL * 2)
+end
+
+function HiSettingsScreen:OnControl(control, down)
+    if HiSettingsScreen._base.OnControl(self,control, down) then
+        return true
+    end
+    if not down and control == CONTROL_CANCEL then
+        self:Close()
+    end
 end
 
 return HiSettingsScreen

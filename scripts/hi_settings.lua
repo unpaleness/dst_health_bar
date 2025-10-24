@@ -38,6 +38,7 @@ function HiSettings:SetOpacity(type, opacity)
     local verified_type = math.clamp(type, 1, #self.data.opacities)
     local verified_opacity = math.clamp(opacity, 0, 1)
     self.data.opacities[verified_type] = verified_opacity
+    self:UpdateWidgets()
 end
 
 function HiSettings:GetHealthBarOpacity()
@@ -56,6 +57,7 @@ function HiSettings:SetColourIndex(type, index)
     local verified_type = math.clamp(type, 1, #self.data.colours)
     local verified_index = math.clamp(index, 1, #COLOURS)
     self.data.colours[verified_type] = verified_index
+    self:UpdateWidgets()
 end
 
 function HiSettings:GetColourIndex(type)

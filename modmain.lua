@@ -304,11 +304,19 @@ end)
 -- Settings up user configuration in-game widget. Client only
 
 if not GLOBAL.TheNet:IsDedicated() then
-    local HiSettingsButtonWidget = require "widgets/hi_settings_button_widget"
+    local HiSettingsScreen = require "widgets/hi_settings_screen"
 	AddSimPostInit(function()
-		AddClassPostConstruct("widgets/controls", function(self, owner)
-			local button = HiSettingsButtonWidget()
-			self.topleft_root:AddChild(button)
-		end)
+        AddClassPostConstruct("screens/redux/pausescreen", function(self)
+            self.menu:AddItem("HI Settings", function()
+                GLOBAL.HI_SETTINGS:Load()
+                local settings_screen = HiSettingsScreen()
+                self:unpause()
+                GLOBAL.ThePlayer.HUD:OpenScreenUnderPause(settings_screen)
+            end)
+            local button_h = 50 -- magic number from screens/redux/pausescreen.lua
+	        local y_pos = (button_h * (#self.menu.items - 1) / 2)
+            self.menu:SetPosition(0, y_pos, 0)
+            self.menu.items[#self.menu.items]:SetScale(.7)
+        end)
 	end)
 end
