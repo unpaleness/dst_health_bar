@@ -25,6 +25,6 @@ BUGS
 +FIXED - widgets appear on left bottom corner
 +FIXED - flicking damage indicators with 0 on some creatures spawn
 +FIXED - HP bars and damage numbers shouldn't consume clicks and hover
++FIXED - checkboxes with hp visibility applies values instantly but reopen settings rollbacks changes. Workaround: press apply button
 - heal indicator appears when hp bar is created (entity recieves initial hp diff)
-- checkboxes with hp visibility applies values instantly but reopen settings rollbacks changes. Workaround: press apply button
 !- player hp collides with beefalo hp
