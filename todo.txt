@@ -1,0 +1,30 @@
+TASKS
+
++DONE - damage figures size depending on value
++DONE - detect agro state and states when we don't want to show hp
++DONE - add some hp bar actually (heart or simple bar)
++DONE - customization on client
++DONE - hide hp bar for entities in shadow
++DONE - add options for other elements: hp figures opacity, damage opacity
++DONE - add options to specify visibility of HP bar for specific groups of entities (players, bosses, structures, ...)
++DONE - add separate mark for neutrals and enemies
+- add color (and probably icon) to different damage types (pack damage in chunks by type to save brandwidth)
+- show somehow resistance, armor or affinity (that you deal less or more damage) (TOO HARD)
+- show damage on hp bar with temp indicator and animation
+- probably floor player HP and ceil all other's
+- somehow highlight enemy that is going to target players
+!- add option to hide hp bars out of combat
+!- add possibility to configure mod in main menu (for steam deck)
+!- add configurable size of HP bar
+!- add option to show max hp
+!- add option to show hp above entities
+
+BUGS
+
++FIXED - hp bar opacity is reset to 1 when hp bar color changed
++FIXED - widgets appear on left bottom corner
++FIXED - flicking damage indicators with 0 on some creatures spawn
++FIXED - HP bars and damage numbers shouldn't consume clicks and hover
+- heal indicator appears when hp bar is created (entity recieves initial hp diff)
+- checkboxes with hp visibility applies values instantly but reopen settings rollbacks changes. Workaround: press apply button
+!- player hp collides with beefalo hp
