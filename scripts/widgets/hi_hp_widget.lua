@@ -8,6 +8,8 @@ local HP_SIZE_Y = 20
 local BOX_BG_PADDING = 6
 local BOX_INNER_PADDING = 6
 local BOX_BG_MIN_SIZE = 6
+local HP_WIDGET_OFFSET = Vector3(0, -20, 0)
+local HP_WIDGET_RIDER_OFFSET = Vector3(0, 50, 0)
 
 local STATE_NEUTRAL = 1
 local STATE_FRIEND = 2
@@ -49,11 +51,11 @@ local function GetHpWidgetState(target)
         return STATE_PLAYER
     end
     local player_id = ThePlayer and ThePlayer.userid or nil
-    local follow_target_value = target._hi_follow_target_replicated:value()
+    local follow_target_value = target._hiFollowTargetReplicated:value()
     if follow_target_value == player_id or target:HasTag("companion") then
         return STATE_FRIEND
     end
-    local combat_target_value = target._hi_combat_target_replicated:value()
+    local combat_target_value = target._hiCombatTargetReplicated:value()
     if combat_target_value == player_id then
         return STATE_HOSTILE
     end
@@ -63,43 +65,56 @@ end
 
 local HiHpWidget = Class(HiBaseWidget, function(self, hp, max_hp)
     HiBaseWidget._ctor(self, "HiHpWidget")
-    self.offset = Vector3(0, -20, 0)
-    self.hp_bar_size_x = HP_SIZE_X
-    self.hp_bar_size_y = HP_SIZE_Y
-    self.text_size = FONT_SIZE_MAX
+    self.offset = HP_WIDGET_OFFSET
+    self.hpBarSizeX = HP_SIZE_X
+    self.hpBarSizeY = HP_SIZE_Y
+    self.textSize = FONT_SIZE_MAX
     self.hp = 0
     self.state = STATE_NEUTRAL
-    self.is_boss = false
-    self.is_structure = false
-    self.is_wall_or_boat = false
-    self.box_bg = self:AddChild(NineSlice("images/hp_bg.xml"))
-    self.box_bg:SetSize(self.hp_bar_size_x - BOX_BG_PADDING, self.hp_bar_size_y - BOX_BG_PADDING)
+    self.isBoss = false
+    self.isStructure = false
+    self.isWallOrBoat = false
+    self.isRider = false
+    self.boxBg = self:AddChild(NineSlice("images/hp_bg.xml"))
+    self.boxBg:SetSize(self.hpBarSizeX - BOX_BG_PADDING, self.hpBarSizeY - BOX_BG_PADDING)
     self.box = self:AddChild(NineSlice("images/hp_white.xml"))
-    self.box:SetSize(self.hp_bar_size_x - BOX_INNER_PADDING, self.hp_bar_size_y - BOX_INNER_PADDING)
-    self.text = self:AddChild(Text(BODYTEXTFONT, self.text_size, math.floor(hp), { 1, 1, 1, 1 }))
-    self.text:SetPosition(0, -(self.hp_bar_size_y + self.text_size) * 0.5)
+    self.box:SetSize(self.hpBarSizeX - BOX_INNER_PADDING, self.hpBarSizeY - BOX_INNER_PADDING)
+    self.text = self:AddChild(Text(BODYTEXTFONT, self.textSize, math.floor(hp), { 1, 1, 1, 1 }))
+    self.text:SetPosition(0, -(self.hpBarSizeY + self.textSize) * 0.5)
     self:ApplySettings()
     self:UpdateHp(hp, max_hp)
     self:UpdateWhilePaused(false)
 end)
+
+function HiHpWidget:SetRider(newIsRider)
+    self.isRider = newIsRider
+end
+
+function HiHpWidget:GetOffset()
+    local offset = self._base.GetOffset(self)
+    if self.isRider then
+        offset = offset + HP_WIDGET_RIDER_OFFSET
+    end
+    return offset
+end
 
 function HiHpWidget:SetImageTint(tint)
     self.box:SetTint(tint[1], tint[2], tint[3], tint[4] * HI_SETTINGS:GetHealthBarOpacity())
 end
 
 function HiHpWidget:SetTarget(target)
-    self.is_boss = target:HasTag("epic")
-    self.is_structure = target:HasTag("structure")
-    self.is_wall_or_boat = target:HasTag("boat") or target:HasTag("boatbumper") or target:HasTag("wall")
-    HiBaseWidget.SetTarget(self, target)
+    self.isBoss = target:HasTag("epic")
+    self.isStructure = target:HasTag("structure")
+    self.isWallOrBoat = target:HasTag("boat") or target:HasTag("boatbumper") or target:HasTag("wall")
+    self._base.SetTarget(self, target)
     self:UpdateState(true)
 end
 
 function HiHpWidget:Kill()
-    self.box_bg:Kill()
+    self.boxBg:Kill()
     self.box:Kill()
     self.text:Kill()
-    Widget.Kill(self)
+    self._base.Kill(self)
 end
 
 function HiHpWidget:UpdateHp(hp, max_hp)
@@ -111,18 +126,18 @@ function HiHpWidget:UpdateHp(hp, max_hp)
         print("HiHpWidget:UpdateHp: max_hp is 0")
         return
     end
-    local x, y, text_size = GetScaledValues(max_hp)
-    if self.hp_bar_size_x ~= x or self.hp_bar_size_y ~= y then
-        self.hp_bar_size_x = x
-        self.hp_bar_size_y = y
-        self.text_size = text_size
-        self.box_bg:SetSize(self.hp_bar_size_x - BOX_BG_PADDING, self.hp_bar_size_y - BOX_BG_PADDING)
-        self.text:SetSize(self.text_size)
-        self.text:SetPosition(0, -(self.hp_bar_size_y + self.text_size) * 0.5)
+    local x, y, textSize = GetScaledValues(max_hp)
+    if self.hpBarSizeX ~= x or self.hpBarSizeY ~= y then
+        self.hpBarSizeX = x
+        self.hpBarSizeY = y
+        self.textSize = textSize
+        self.boxBg:SetSize(self.hpBarSizeX - BOX_BG_PADDING, self.hpBarSizeY - BOX_BG_PADDING)
+        self.text:SetSize(self.textSize)
+        self.text:SetPosition(0, -(self.hpBarSizeY + self.textSize) * 0.5)
     end
-    local hp_bar_filler_size_x = math.max((self.hp_bar_size_x - BOX_INNER_PADDING) * hp / max_hp, 0)
-    self.box:SetPosition((BOX_INNER_PADDING - self.hp_bar_size_x + hp_bar_filler_size_x) * 0.5, 0, 0)
-    self.box:SetSize(hp_bar_filler_size_x, self.hp_bar_size_y - BOX_INNER_PADDING)
+    local hpBarFillerSizeX = math.max((self.hpBarSizeX - BOX_INNER_PADDING) * hp / max_hp, 0)
+    self.box:SetPosition((BOX_INNER_PADDING - self.hpBarSizeX + hpBarFillerSizeX) * 0.5, 0, 0)
+    self.box:SetSize(hpBarFillerSizeX, self.hpBarSizeY - BOX_INNER_PADDING)
 end
 
 function HiHpWidget:UpdateState(force)
@@ -134,7 +149,7 @@ function HiHpWidget:UpdateState(force)
 end
 
 function HiHpWidget:ApplySettings()
-    self.box_bg:SetFadeAlpha(HI_SETTINGS:GetHealthBarOpacity())
+    self.boxBg:SetFadeAlpha(HI_SETTINGS:GetHealthBarOpacity())
     self.text:SetFadeAlpha(HI_SETTINGS:GetHealthNumberOpacity())
     self:UpdateState(true)
 end
@@ -147,11 +162,11 @@ function HiHpWidget:IsVisibleBySettings()
             return HI_SETTINGS:GetVisibility(VISIBILITY_INDEX_OTHER_PLAYER)
         end
     else
-        if self.is_boss then
+        if self.isBoss then
             return HI_SETTINGS:GetVisibility(VISIBILITY_INDEX_BOSS)
-        elseif self.is_structure then
+        elseif self.isStructure then
             return HI_SETTINGS:GetVisibility(VISIBILITY_INDEX_STRUCTURE)
-        elseif self.is_wall_or_boat then
+        elseif self.isWallOrBoat then
             return HI_SETTINGS:GetVisibility(VISIBILITY_INDEX_WALL_BOAT)
         elseif self.state == STATE_HOSTILE then
             return HI_SETTINGS:GetVisibility(VISIBILITY_INDEX_HOSTILE)
@@ -163,13 +178,26 @@ function HiHpWidget:IsVisibleBySettings()
     end
 end
 
-function HiHpWidget:OnUpdate(dt)
-    HiBaseWidget.OnUpdate(self, dt)
+function HiHpWidget:IsVisibleByLogic()
+    if self.target == nil then
+        return false
+    end
+    local canSee = CanEntitySeeTarget(ThePlayer, self.target)
+    return canSee
+end
 
-    if CanEntitySeeTarget(ThePlayer, self.target) and self:IsVisibleBySettings() then
-        self:Show()
-    else
+function HiHpWidget:OnUpdate(dt)
+    local isVisible = self:IsVisibleBySettings() and self:IsVisibleByLogic()
+
+    -- separating hiding and showing should prevent flickering on left bottom corner of the screen
+    if not isVisible then
         self:Hide()
+    end
+
+    self._base.OnUpdate(self, dt)
+
+    if isVisible then
+        self:Show()
     end
 end
 

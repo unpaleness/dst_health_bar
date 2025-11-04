@@ -56,7 +56,7 @@ end)
 
 function HiDamageWidget:Kill()
     self.text:Kill()
-    Widget.Kill(self)
+    self._base.Kill(self)
 end
 
 function HiDamageWidget:OnUpdate(dt)

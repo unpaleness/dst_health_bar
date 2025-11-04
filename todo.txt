@@ -28,3 +28,6 @@ BUGS
 +FIXED - checkboxes with hp visibility applies values instantly but reopen settings rollbacks changes. Workaround: press apply button
 - heal indicator appears when hp bar is created (entity recieves initial hp diff)
 !- player hp collides with beefalo hp
+!- hp of captured creatures in inventory is shown and collides with player's hp
+!- antlion has no HP when enraged
+!- beefalo has no hp on mounted if playing on mastersim
