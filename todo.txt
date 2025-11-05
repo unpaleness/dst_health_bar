@@ -30,4 +30,5 @@ BUGS
 !- player hp collides with beefalo hp
 !- hp of captured creatures in inventory is shown and collides with player's hp
 !- antlion has no HP when enraged
-!- beefalo has no hp on mounted if playing on mastersim
+!- beefalo has no hp on mounted, if playing on mastersim
+!- rabbits' and moles' hp bars are displayed, if they are in holes, after world is loaded, if playing on mastersim
