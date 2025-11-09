@@ -30,6 +30,10 @@ local function HiClientTryCreateHpWidget(inst)
     if widget ~= nil then
         return
     end
+    local riderGUID = inst._hiCurrentRiderGuidReplicated:value()
+    if inst:HasTag("INLIMBO") and (riderGUID == nil or riderGUID == 0) then
+        return
+    end
     widget = GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiHpWidget(inst._hiCurrentHealthClient, inst._hiMaxHealthClient))
     widget:SetTarget(inst)
     inst._hiHpWidget = widget
@@ -67,7 +71,7 @@ end
 
 local function HiClientTrySpawnDamageWidget(inst)
     if GLOBAL.TheNet:IsDedicated() or GLOBAL.ThePlayer == nil or inst._hiCurrentHealthClient == nil or not GLOBAL.CanEntitySeeTarget(GLOBAL.ThePlayer, inst) then
-        print("HiClientTrySpawnDamageWidget cannot spawn damage indicator for", inst)
+        -- print("HiClientTrySpawnDamageWidget cannot spawn damage indicator for", inst)
         return
     end
     local damage_widget = GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiDamageWidget(inst._hiCurrentHealthReplicated:value() - inst._hiCurrentHealthClient))
@@ -79,7 +83,7 @@ local function HiClientOnHealthDirty(inst)
     local maxHealthValue = inst._hiMaxHealthReplicated:value()
     local healthValueClient = inst._hiCurrentHealthClient or 0
 	local maxHealthValueClient = inst._hiMaxHealthClient or 0
-    print("HiClientOnHealthDirty:", inst, ":", healthValueClient, " -> ", healthValue, " / ", maxHealthValueClient, " -> ", maxHealthValue)
+    -- print("HiClientOnHealthDirty:", inst, ":", healthValueClient, " -> ", healthValue, " / ", maxHealthValueClient, " -> ", maxHealthValue)
 	if inst._hiCurrentHealthClient ~= nil and healthValue ~= healthValueClient then
     	HiClientTrySpawnDamageWidget(inst)
 	end
@@ -109,7 +113,7 @@ local function HiClientOnFollowTargetDirty(inst)
 end
 
 local function HiClientOnEntityActive(inst)
-    print("HiClientOnEntityActive", inst)
+    -- print("HiClientOnEntityActive", inst)
     if inst == nil or not inst:IsValid() then
         return
     end
@@ -117,7 +121,7 @@ local function HiClientOnEntityActive(inst)
 end
 
 local function HiClientOnEntityPassive(inst)
-    print("HiClientOnEntityPassive", inst)
+    -- print("HiClientOnEntityPassive", inst)
     if inst == nil or not inst:IsValid() then
         return
     end
@@ -126,7 +130,7 @@ local function HiClientOnEntityPassive(inst)
 end
 
 local function HiClientOnCurrentRiderGuidDirty(inst)
-    print("HiClientOnCurrentRiderGuidDirty", inst)
+    -- print("HiClientOnCurrentRiderGuidDirty", inst)
     local oldRiderGuid = inst._hiCurrentRiderGuid
     local newRiderGuid = inst._hiCurrentRiderGuidReplicated:value()
     if newRiderGuid ~= 0 then
@@ -217,7 +221,7 @@ local function HiClientShouldHaveHealth(inst)
         inst:HasTag("monster") or
         inst:HasTag("player") or
         inst:HasTag("smallcreature") or
-        inst:HasTag("structure") or
+        -- inst:HasTag("structure") or
         inst:HasTag("wall") or
         -- works on master sim only
         -- inst:HasTag("__health") or
@@ -276,7 +280,7 @@ end
 ]]
 
 local function HiServerOnRiderChange(inst, data)
-    print("HiServerOnRiderChanged", inst, data and data.newrider and data.newrider.GUID or 0)
+    -- print("HiServerOnRiderChanged", inst, data and data.newrider and data.newrider.GUID or 0)
     if data and data.newrider then
         inst._hiCurrentRiderGuidReplicated:set(data.newrider.GUID)
     else
@@ -365,7 +369,7 @@ AddPrefabPostInitAny(function(inst)
         inst:ListenForEvent("enterlimbo", HiClientOnEnterLimbo)
         inst:ListenForEvent("entitysleep", HiClientOnSleep)
         inst:ListenForEvent("onremove", HiClientOnRemove)
-        HiClientOnEntityActive(inst)
+        -- HiClientOnEntityActive(inst)
         inst:ListenForEvent("hiOnCurrentHealthDirty", HiClientOnHealthDirty)
         inst:ListenForEvent("hiOnMaxHealthDirty", HiClientOnHealthDirty)
         inst:ListenForEvent("hiOnCombatTargetDirty", HiClientOnCombatTargetDirty)

@@ -26,9 +26,9 @@ BUGS
 +FIXED - flicking damage indicators with 0 on some creatures spawn
 +FIXED - HP bars and damage numbers shouldn't consume clicks and hover
 +FIXED - checkboxes with hp visibility applies values instantly but reopen settings rollbacks changes. Workaround: press apply button
++FIXED - player hp collides with beefalo hp
++FIXED - beefalo has no hp on mounted, if playing on mastersim
++FIXED - rabbits' and moles' hp bars are displayed, if they are in holes, after world is loaded, if playing on mastersim
 - heal indicator appears when hp bar is created (entity recieves initial hp diff)
-!- player hp collides with beefalo hp
 !- hp of captured creatures in inventory is shown and collides with player's hp
 !- antlion has no HP when enraged
-!- beefalo has no hp on mounted, if playing on mastersim
-!- rabbits' and moles' hp bars are displayed, if they are in holes, after world is loaded, if playing on mastersim
