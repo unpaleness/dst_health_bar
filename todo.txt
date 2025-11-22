@@ -9,6 +9,7 @@ TASKS
 +DONE - add options to specify visibility of HP bar for specific groups of entities (players, bosses, structures, ...)
 +DONE - add separate mark for neutrals and enemies
 +DONE - add possibility to configure mod using controller
++DONE - add option to show max hp
 - add color (and probably icon) to different damage types (pack damage in chunks by type to save brandwidth)
 - show somehow resistance, armor or affinity (that you deal less or more damage) (TOO HARD)
 - show damage on hp bar with temp indicator and animation
@@ -16,13 +17,11 @@ TASKS
 - somehow highlight enemy that is going to target players
 !- add option to hide hp bars out of combat
 !- add configurable size of HP bar
-!- add option to show max hp
-!- add option to show hp above entities
+!- add option to show hp above entities (TOO HARD)
 
 BUGS
 
 +FIXED - hp bar opacity is reset to 1 when hp bar color changed
-+FIXED - widgets appear on left bottom corner
 +FIXED - flicking damage indicators with 0 on some creatures spawn
 +FIXED - HP bars and damage numbers shouldn't consume clicks and hover
 +FIXED - checkboxes with hp visibility applies values instantly but reopen settings rollbacks changes. Workaround: press apply button
@@ -32,3 +31,4 @@ BUGS
 - heal indicator appears when hp bar is created (entity recieves initial hp diff)
 !- hp of captured creatures in inventory is shown and collides with player's hp
 !- antlion has no HP when enraged
+!- widgets appear on left bottom corner if playing on mastersim

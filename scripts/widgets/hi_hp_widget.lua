@@ -25,6 +25,8 @@ local VISIBILITY_INDEX_WALL_BOAT = 6
 local VISIBILITY_INDEX_HOSTILE = 7
 local VISIBILITY_INDEX_FRIEND = 8
 
+local SHOW_MAX_HP = 1
+
 local FONT_SIZE_MAX = 50
 local FONT_SIZE_MIN = 10
 
@@ -63,13 +65,14 @@ local function GetHpWidgetState(target)
     return STATE_NEUTRAL
 end
 
-local HiHpWidget = Class(HiBaseWidget, function(self, hp, max_hp)
+local HiHpWidget = Class(HiBaseWidget, function(self, hp, maxHp)
     HiBaseWidget._ctor(self, "HiHpWidget")
     self.offset = HP_WIDGET_OFFSET
     self.hpBarSizeX = HP_SIZE_X
     self.hpBarSizeY = HP_SIZE_Y
     self.textSize = FONT_SIZE_MAX
     self.hp = 0
+    self.maxHp = 0
     self.state = STATE_NEUTRAL
     self.isBoss = false
     self.isStructure = false
@@ -82,7 +85,7 @@ local HiHpWidget = Class(HiBaseWidget, function(self, hp, max_hp)
     self.text = self:AddChild(Text(BODYTEXTFONT, self.textSize, math.floor(hp), { 1, 1, 1, 1 }))
     self.text:SetPosition(0, -(self.hpBarSizeY + self.textSize) * 0.5)
     self:ApplySettings()
-    self:UpdateHp(hp, max_hp)
+    self:UpdateHp(hp, maxHp)
     self:UpdateWhilePaused(false)
 end)
 
@@ -117,16 +120,17 @@ function HiHpWidget:Kill()
     self._base.Kill(self)
 end
 
-function HiHpWidget:UpdateHp(hp, max_hp)
-    if hp ~= self.hp then
+function HiHpWidget:UpdateHp(hp, maxHp, force)
+    if hp ~= self.hp or maxHp ~= self.maxHp or force then
         self.hp = hp
-        self.text:SetString(math.floor(self.hp))
+        self.maxHp = maxHp
+        local resultString = tostring(math.floor(self.hp))
+        if HI_SETTINGS:GetOtherOption(SHOW_MAX_HP) then
+            resultString = resultString .. "/" .. tostring(math.floor(self.maxHp))
+        end
+        self.text:SetString(resultString)
     end
-    if max_hp ~= nil and max_hp == 0 then
-        print("HiHpWidget:UpdateHp: max_hp is 0")
-        return
-    end
-    local x, y, textSize = GetScaledValues(max_hp)
+    local x, y, textSize = GetScaledValues(maxHp)
     if self.hpBarSizeX ~= x or self.hpBarSizeY ~= y then
         self.hpBarSizeX = x
         self.hpBarSizeY = y
@@ -135,7 +139,7 @@ function HiHpWidget:UpdateHp(hp, max_hp)
         self.text:SetSize(self.textSize)
         self.text:SetPosition(0, -(self.hpBarSizeY + self.textSize) * 0.5)
     end
-    local hpBarFillerSizeX = math.max((self.hpBarSizeX - BOX_INNER_PADDING) * hp / max_hp, 0)
+    local hpBarFillerSizeX = math.max((self.hpBarSizeX - BOX_INNER_PADDING) * hp / maxHp, 0)
     self.box:SetPosition((BOX_INNER_PADDING - self.hpBarSizeX + hpBarFillerSizeX) * 0.5, 0, 0)
     self.box:SetSize(hpBarFillerSizeX, self.hpBarSizeY - BOX_INNER_PADDING)
 end
@@ -152,6 +156,7 @@ function HiHpWidget:ApplySettings()
     self.boxBg:SetFadeAlpha(HI_SETTINGS:GetHealthBarOpacity())
     self.text:SetFadeAlpha(HI_SETTINGS:GetHealthNumberOpacity())
     self:UpdateState(true)
+    self:UpdateHp(self.hp, self.maxHp, true)
 end
 
 function HiHpWidget:IsVisibleBySettings()

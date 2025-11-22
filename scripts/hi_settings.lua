@@ -17,6 +17,8 @@ local DEFAULT_SETTINGS = {
     colours = {7, 2, 1, 5},
     -- current player, other players, bosses, structures, other entities, all other normally hidden entities (walls, boats), enemies, friends
     visibilities = {true, true, true, true, true, false, true, true},
+    -- show max hp
+    others = {false},
 }
 
 local HiSettings = {
@@ -80,6 +82,17 @@ function HiSettings:GetVisibility(type)
     return self.data.visibilities[verified_type]
 end
 
+function HiSettings:SetOtherOption(type, value)
+    local verified_type = math.clamp(type, 1, #self.data.others)
+    self.data.others[verified_type] = value
+    self:UpdateWidgets()
+end
+
+function HiSettings:GetOtherOption(type)
+    local verified_type = math.clamp(type, 1, #self.data.others)
+    return self.data.others[verified_type]
+end
+
 function HiSettings:UpdateWidgets()
     for _, widget in pairs(self.cached_hp_widgets) do
         widget:ApplySettings()
@@ -110,6 +123,11 @@ function HiSettings:Load()
         if decoded_data.visibilities ~= nil then
             for i = 1, math.min(#self.data.visibilities, #decoded_data.visibilities) do
                 self.data.visibilities[i] = decoded_data.visibilities[i]
+            end
+        end
+        if decoded_data.others ~= nil then
+            for i = 1, math.min(#self.data.others, #decoded_data.others) do
+                self.data.others[i] = decoded_data.others[i]
             end
         end
     end)
