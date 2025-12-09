@@ -52,8 +52,7 @@ local function HiClientTryRemoveHpWidget(inst)
         return
     end
     if widget.inst and widget.inst:IsValid() then
-        widget:Hide()
-        widget:Kill()
+        widget:InitRemoving()
     end
     inst._hiHpWidget = nil
     GLOBAL.HI_SETTINGS.cached_hp_widgets[inst._hiServerGuidReplicated:value()] = nil

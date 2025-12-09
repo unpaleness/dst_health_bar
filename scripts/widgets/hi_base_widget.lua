@@ -1,16 +1,17 @@
 local Widget = require "widgets/widget"
 
-local HEIGHT_SCALE = 60
+-- local HEIGHT_SCALE = 60
 
 local function GetPosition(target)
     if target ~= nil and target:IsValid() then
-        local height = 0
+        -- local height = 0
         -- local physics = target.Physics
         -- if physics then
         --     height = physics:GetHeight()
         -- end
         local x, y = TheSim:GetScreenPos(target:GetPosition():Get())
-        return Vector3(x, y + height * HEIGHT_SCALE, 0)
+        -- return Vector3(x, y + height * HEIGHT_SCALE, 0)
+        return Vector3(x, y, 0)
     end
     return nil
 end

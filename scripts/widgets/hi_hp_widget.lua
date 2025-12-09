@@ -81,12 +81,17 @@ local HiHpWidget = Class(HiBaseWidget, function(self, hp, maxHp)
     self.isRider = false
     self.isVisibleBySettings = true
     self.showOnlyInCombat = false
+    self.isToRemove = false
     -- for showOnlyInCombat mode
     self.isAttacking = false
     self.attackersNum = 0
     self.isRided = false
-    self.hideHpTimeout = 1
-    self.LastCombatActionTs = 0
+    self.hideHpTimeout = 2
+    self.LastCombatActionTs = -math.huge
+    --
+    -- animation
+    self.fadeAnimTime = 0.5
+    self.fadeOpacity = 0
     --
     self.boxBg = self:AddChild(NineSlice("images/hp_bg.xml"))
     self.boxBg:SetSize(self.hpBarSizeX - BOX_BG_PADDING, self.hpBarSizeY - BOX_BG_PADDING)
@@ -114,7 +119,7 @@ function HiHpWidget:GetOffset()
 end
 
 function HiHpWidget:SetImageTint(tint)
-    self.box:SetTint(tint[1], tint[2], tint[3], tint[4] * HI_SETTINGS:GetHealthBarOpacity())
+    self.box:SetTint(tint[1], tint[2], tint[3], tint[4] * self.fadeOpacity * HI_SETTINGS:GetHealthBarOpacity())
 end
 
 function HiHpWidget:SetTarget(target)
@@ -123,6 +128,10 @@ function HiHpWidget:SetTarget(target)
     self.isWallOrBoat = target:HasTag("boat") or target:HasTag("boatbumper") or target:HasTag("wall")
     self._base.SetTarget(self, target)
     self:UpdateState(true)
+end
+
+function HiHpWidget:InitRemoving()
+    self.isToRemove = true
 end
 
 function HiHpWidget:Kill()
@@ -170,9 +179,14 @@ function HiHpWidget:UpdateState(force)
     end
 end
 
+function HiHpWidget:UpdateOpacity()
+    self:SetImageTint(HI_SETTINGS:GetColour(self.state))
+    self.boxBg:SetFadeAlpha(self.fadeOpacity * HI_SETTINGS:GetHealthBarOpacity())
+    self.text:SetFadeAlpha(self.fadeOpacity * HI_SETTINGS:GetHealthNumberOpacity())
+end
+
 function HiHpWidget:ApplySettings()
-    self.boxBg:SetFadeAlpha(HI_SETTINGS:GetHealthBarOpacity())
-    self.text:SetFadeAlpha(HI_SETTINGS:GetHealthNumberOpacity())
+    self:UpdateOpacity()
     self:UpdateState(true)
     self:UpdateHp(self.hp, self.maxHp, true)
 end
@@ -214,7 +228,7 @@ function HiHpWidget:IsVisibleByLogic()
         return true
     end
     -- if out of combat
-    if self.showOnlyInCombat and self.LastCombatActionTs + 2 < GetTime() then
+    if self.showOnlyInCombat and self.LastCombatActionTs + self.hideHpTimeout < GetTime() then
         return false
     end
     return true
@@ -222,15 +236,25 @@ end
 
 function HiHpWidget:OnUpdate(dt)
     self:UpdateCombatAction()
-    local isVisible = self.isVisibleBySettings and self:IsVisibleByLogic()
+    local isToVisible = not self.isToRemove and self.isVisibleBySettings and self:IsVisibleByLogic()
+    if isToVisible and self.fadeOpacity < 1 then
+        self.fadeOpacity = math.clamp(self.fadeOpacity + dt / self.fadeAnimTime, 0, 1)
+        self:UpdateOpacity()
+    end
+    if not isToVisible and self.fadeOpacity > 0 then
+        self.fadeOpacity = math.clamp(self.fadeOpacity - dt / self.fadeAnimTime, 0, 1)
+        self:UpdateOpacity()
+    end
 
-    -- separating hiding and showing should prevent flickering on left bottom corner of the screen
-    if not isVisible then
+    if not isToVisible and self.fadeOpacity == 0 then
         self:Hide()
+        if self.isToRemove then
+            self:Kill()
+        end
         return
     end
 
-    if isVisible then
+    if self.fadeOpacity > 0 then
         self._base.OnUpdate(self, dt)
         self:Show()
     end
