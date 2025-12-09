@@ -220,6 +220,13 @@ local function HiClientOnRemove(inst)
     HiClientOnEntityPassive(inst)
 end
 
+local function HiOnIsInInventoryDirty(inst)
+    local widget = GLOBAL.HI_SETTINGS.cached_hp_widgets[inst._hiServerGuidReplicated:value()]
+    if widget ~= nil then
+        widget.isInInventory = inst._hiIsInInventoryReplicated:value()
+    end
+end
+
 -- Server methods
 
 local function HiServerOnHealthDelta(inst, data)
@@ -268,6 +275,13 @@ local function HiServerOnRiderChange(inst, data)
         inst._hiCurrentRiderGuidReplicated:set(data.newrider.GUID)
     else
         inst._hiCurrentRiderGuidReplicated:set(0)
+    end
+end
+
+local function HiServerOnInInventoryChange(inst)
+    local intentoryItemComponent = inst.components.inventoryitem
+    if intentoryItemComponent ~= nil then
+        inst._hiIsInInventoryReplicated:set(intentoryItemComponent.owner ~= nil)
     end
 end
 
@@ -330,6 +344,7 @@ local function InitPrefab(inst)
 	inst._hiCombatTargetGuidReplicated = GLOBAL.net_int(inst.GUID, "_hiCombatTargetGuidReplicated", "hiOnCombatTargetDirty")
 	inst._hiFollowTargetGuidReplicated = GLOBAL.net_int(inst.GUID, "_hiFollowTargetGuidReplicated", "hiOnFollowTargetDirty")
     inst._hiCurrentRiderGuidReplicated = GLOBAL.net_int(inst.GUID, "_hiCurrentRiderGuidReplicated", "hiOnCurrentRiderGuidDirty")
+    inst._hiIsInInventoryReplicated = GLOBAL.net_bool(inst.GUID, "_hiIsInInventoryReplicated", "hiOnIsInInventoryDirty")
     -- inst._hiAttackersNumReplicated = GLOBAL.net_int(inst.GUID, "_hiAttackersNumReplicated", "hiOnAttackersNumDirty")
     -- this is a packed value+string data about damage replicated to client
     -- inst._hiCombinedDamageString = GLOBAL.net_string(inst.GUID, "_hiCombinedDamageString_replicated", "hiOnCombinedDamageStringDirty")
@@ -340,6 +355,9 @@ local function InitPrefab(inst)
         inst:ListenForEvent("stopfollowing", HiServerOnStopFollowing)
         -- inst:ListenForEvent("attacked", HiServerOnAttacked)
         inst:ListenForEvent("riderchanged", HiServerOnRiderChange)
+        inst:ListenForEvent("onputininventory", HiServerOnInInventoryChange)
+        -- inst:ListenForEvent("onpickup", HiServerOnInInventoryChange)
+        inst:ListenForEvent("ondropped", HiServerOnInInventoryChange)
     end
     if not GLOBAL.TheNet:IsDedicated() then
         -- print("AddPrefabPostInitAny:", inst, ": setting up client subscriptions")
@@ -360,6 +378,7 @@ local function InitPrefab(inst)
         -- inst:ListenForEvent("hiOnCombinedDamageStringDirty", HiClientOnCombinedDamageStringDirty)
         inst:ListenForEvent("hiOnCurrentRiderGuidDirty", HiClientOnCurrentRiderGuidDirty)
         -- inst:ListenForEvent("hiOnAttackersNumDirty", HiOnAttackersNumDirty)
+        inst:ListenForEvent("hiOnIsInInventoryDirty", HiOnIsInInventoryDirty)
     end
 end
 

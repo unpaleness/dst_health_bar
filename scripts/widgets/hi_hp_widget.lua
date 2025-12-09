@@ -79,6 +79,7 @@ local HiHpWidget = Class(HiBaseWidget, function(self, hp, maxHp)
     self.isStructure = false
     self.isWallOrBoat = false
     self.isRider = false
+    self.isInInventory = false
     self.isVisibleBySettings = true
     self.showOnlyInCombat = false
     self.isToRemove = false
@@ -221,6 +222,10 @@ function HiHpWidget:IsVisibleByLogic()
     end
     -- if player shouldn't see target (i.e. target is in shadow)
     if not CanEntitySeeTarget(ThePlayer, self.target) then
+        return false
+    end
+    -- don't show hp bar for entities in inventory
+    if self.isInInventory then
         return false
     end
     -- always show players, friends and enemies
