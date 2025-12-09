@@ -356,7 +356,6 @@ local function InitPrefab(inst)
         -- inst:ListenForEvent("attacked", HiServerOnAttacked)
         inst:ListenForEvent("riderchanged", HiServerOnRiderChange)
         inst:ListenForEvent("onputininventory", HiServerOnInInventoryChange)
-        -- inst:ListenForEvent("onpickup", HiServerOnInInventoryChange)
         inst:ListenForEvent("ondropped", HiServerOnInInventoryChange)
     end
     if not GLOBAL.TheNet:IsDedicated() then
