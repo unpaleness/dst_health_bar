@@ -102,6 +102,8 @@ local function HiClientOnCombatTargetDirty(inst)
 	local hpWidget = inst._hiHpWidget
 	if hpWidget ~= nil then
 		hpWidget:UpdateState()
+        local targetGuid = inst._hiCombatTargetGuidReplicated:value()
+        hpWidget.isAttacking = targetGuid ~= nil and targetGuid > 0
 	end
 end
 
@@ -117,7 +119,7 @@ local function HiClientOnEntityActive(inst)
     if inst == nil or not inst:IsValid() then
         return
     end
-	HiClientOnHealthDirty(inst)
+	-- HiClientOnHealthDirty(inst)
 end
 
 local function HiClientOnEntityPassive(inst)
@@ -133,23 +135,39 @@ local function HiClientOnCurrentRiderGuidDirty(inst)
     -- print("HiClientOnCurrentRiderGuidDirty", inst)
     local oldRiderGuid = inst._hiCurrentRiderGuid
     local newRiderGuid = inst._hiCurrentRiderGuidReplicated:value()
+    -- we should make rideable entity widget visible while rided
+    local widgetRideable = GLOBAL.HI_SETTINGS.cached_hp_widgets[inst._hiServerGuidReplicated:value()]
     if newRiderGuid ~= 0 then
         -- This is a workaround to show hp on beefalo for master sim as it is going to LIMBO then is ridden
         HiClientOnEntityActive(inst)
         local widget = GLOBAL.HI_SETTINGS.cached_hp_widgets[newRiderGuid]
         -- we adjust hp bar of the new rider to exclude collision with a rideable entity
         if widget then
-            widget:SetRider(true)
+            widget.isRider = true
+        end
+        if widgetRideable then
+            widgetRideable.isRided = true
+        end
+    else
+        if widgetRideable then
+            widgetRideable.isRided = false
         end
     end
     if oldRiderGuid ~= 0 then
         local widget = GLOBAL.HI_SETTINGS.cached_hp_widgets[oldRiderGuid]
         -- we restore hp bar position of the old rider
         if widget then
-            widget:SetRider(false)
+            widget.isRider = false
         end
     end
     inst._hiCurrentRiderGuid = newRiderGuid
+end
+
+local function HiOnAttackersNumDirty(inst)
+    local widget = GLOBAL.HI_SETTINGS.cached_hp_widgets[inst._hiServerGuidReplicated:value()]
+    if widget ~= nil then
+        widget.attackersNum = inst._hiAttackersNumReplicated:value()
+    end
 end
 
 --[[
@@ -251,13 +269,13 @@ end
 local function HiServerOnStartFollowing(inst, data)
 	-- print("HiServerOnStartFollowing", inst, data.leader)
 	local leader = data.leader
-	local isNewTargetPlayer = leader and leader:HasTag("player") or false
-	inst._hiFollowTargetReplicated:set(isNewTargetPlayer and leader.userid or "")
+	local isNewTargetPlayer = leader and leader == GLOBAL.ThePlayer or false
+	inst._hiFollowTargetGuidReplicated:set(isNewTargetPlayer and leader._hiServerGuidReplicated:value() or 0)
 end
 
 local function HiServerOnStopFollowing(inst, data)
 	-- print("HiServerOnStopFollowing", inst, data.leader)
-	inst._hiFollowTargetReplicated:set("")
+	inst._hiFollowTargetGuidReplicated:set(0)
 end
 
 --[[
@@ -298,13 +316,17 @@ local function HiServerProcessHealthComponent(health)
 	end
 end
 
-local function HiServerProcessCombat(combat)
+local function HiServerProcessCombatComponent(combat)
 	local function OnChangeTarget(component, oldTarget, newTarget)
-		local isOldTargetPlayer = oldTarget and oldTarget:HasTag("player") or false
-		local isNewTargetPlayer = newTarget and newTarget:HasTag("player") or false
-		if oldTarget ~= newTarget and (isOldTargetPlayer or isNewTargetPlayer) then
+		if oldTarget ~= newTarget then
 			-- print("ChangeTarget {", component.inst, "}: old: ", oldTarget and oldTarget or "<nil>", ", new: ", newTarget and newTarget or "<nil>")
-			component.inst._hiCombatTargetReplicated:set(isNewTargetPlayer and newTarget.userid or "")
+			component.inst._hiCombatTargetGuidReplicated:set(newTarget and newTarget._hiServerGuidReplicated:value() or 0)
+            if oldTarget ~= nil then
+                oldTarget._hiAttackersNumReplicated:set(oldTarget._hiAttackersNumReplicated:value() - 1)
+            end
+            if newTarget ~= nil then
+                newTarget._hiAttackersNumReplicated:set(newTarget._hiAttackersNumReplicated:value() + 1)
+            end
 		end
 	end
 	local OldEngageTarget = combat.EngageTarget
@@ -325,31 +347,27 @@ end
 
 -- Subscription on all prefabs initialization. Here we create network variables, make subscriptions on events. This should be done on both client and server
 
-AddPrefabPostInitAny(function(inst)
-    -- print("AddPrefabPostInitAny:", inst, ": Start")
-    if not HiClientShouldHaveHealth(inst) then
+local function InitPrefab(inst)
+    if inst == nil then
         return
     end
+    if inst._hiInitializedLocal ~= nil and inst._hiInitializedLocal then
+        return
+    end
+    inst._hiInitializedLocal = true
+    -- print("InitPrefab:", inst, ": Start")
     -- authorized health value, caluclated on server, replicated to client
     -- possibly overhead here as it is added to every single prefab, but seems to work
     inst._hiServerGuidReplicated = GLOBAL.net_int(inst.GUID, "_hiServerGuidReplicated", "hiOnServerGuidDirty")
     inst._hiServerGuidReplicated:set(inst.GUID)
     inst._hiCurrentHealthReplicated = GLOBAL.net_float(inst.GUID, "_hiCurrentHealthReplicated", "hiOnCurrentHealthDirty")
     inst._hiMaxHealthReplicated = GLOBAL.net_float(inst.GUID, "_hiMaxHealthReplicated", "hiOnMaxHealthDirty")
-	inst._hiCombatTargetReplicated = GLOBAL.net_string(inst.GUID, "_hiCombatTargetReplicated", "hiOnCombatTargetDirty")
-	inst._hiFollowTargetReplicated = GLOBAL.net_string(inst.GUID, "_hiFollowTargetReplicated", "hiOnFollowTargetDirty")
+	inst._hiCombatTargetGuidReplicated = GLOBAL.net_int(inst.GUID, "_hiCombatTargetGuidReplicated", "hiOnCombatTargetDirty")
+	inst._hiFollowTargetGuidReplicated = GLOBAL.net_int(inst.GUID, "_hiFollowTargetGuidReplicated", "hiOnFollowTargetDirty")
     inst._hiCurrentRiderGuidReplicated = GLOBAL.net_int(inst.GUID, "_hiCurrentRiderGuidReplicated", "hiOnCurrentRiderGuidDirty")
+    inst._hiAttackersNumReplicated = GLOBAL.net_int(inst.GUID, "_hiAttackersNumReplicated", "hiOnAttackersNumDirty")
     -- this is a packed value+string data about damage replicated to client
     -- inst._hiCombinedDamageString = GLOBAL.net_string(inst.GUID, "_hiCombinedDamageString_replicated", "hiOnCombinedDamageStringDirty")
-    local health_component = inst.components.health
-    -- as health component persists only on server this will set the value on server and trigger synchronization to client
-    if health_component ~= nil then
-		HiServerProcessHealthComponent(health_component)
-    end
-	local combat_component = inst.components.combat
-    if combat_component ~= nil then
-		HiServerProcessCombat(combat_component)
-    end
     if GLOBAL.TheWorld.ismastersim then
         -- print("AddPrefabPostInitAny:", inst, ": setting up server subscriptions")
         inst:ListenForEvent("healthdelta", HiServerOnHealthDelta)
@@ -376,6 +394,24 @@ AddPrefabPostInitAny(function(inst)
         inst:ListenForEvent("hiOnFollowTargetDirty", HiClientOnFollowTargetDirty)
         -- inst:ListenForEvent("hiOnCombinedDamageStringDirty", HiClientOnCombinedDamageStringDirty)
         inst:ListenForEvent("hiOnCurrentRiderGuidDirty", HiClientOnCurrentRiderGuidDirty)
+        inst:ListenForEvent("hiOnAttackersNumDirty", HiOnAttackersNumDirty)
+    end
+end
+
+AddPrefabPostInitAny(function(inst)
+    InitPrefab(inst)
+end)
+
+AddComponentPostInit("combat", function(self, inst)
+    if GLOBAL.TheWorld.ismastersim then
+        InitPrefab(inst)
+        HiServerProcessCombatComponent(self)
+    end
+end)
+AddComponentPostInit("health", function(self, inst)
+    if GLOBAL.TheWorld.ismastersim then
+        InitPrefab(inst)
+        HiServerProcessHealthComponent(self)
     end
 end)
 

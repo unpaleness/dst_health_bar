@@ -26,6 +26,7 @@ local VISIBILITY_INDEX_HOSTILE = 7
 local VISIBILITY_INDEX_FRIEND = 8
 
 local SHOW_MAX_HP = 1
+local SHOW_ONLY_IN_COMBAT = 2
 
 local FONT_SIZE_MAX = 50
 local FONT_SIZE_MIN = 10
@@ -52,14 +53,14 @@ local function GetHpWidgetState(target)
     if target:HasTag("player") then
         return STATE_PLAYER
     end
-    local player_id = ThePlayer and ThePlayer.userid or nil
-    local follow_target_value = target._hiFollowTargetReplicated:value()
-    if follow_target_value == player_id or target:HasTag("companion") then
-        return STATE_FRIEND
-    end
-    local combat_target_value = target._hiCombatTargetReplicated:value()
-    if combat_target_value == player_id then
+    local playerGuid = ThePlayer and ThePlayer._hiServerGuidReplicated:value() or 0
+    local combatTargetGuid = target._hiCombatTargetGuidReplicated:value()
+    if combatTargetGuid == playerGuid then
         return STATE_HOSTILE
+    end
+    local followTargetGuid = target._hiFollowTargetGuidReplicated:value()
+    if followTargetGuid == playerGuid or target:HasTag("companion") then
+        return STATE_FRIEND
     end
 
     return STATE_NEUTRAL
@@ -78,6 +79,15 @@ local HiHpWidget = Class(HiBaseWidget, function(self, hp, maxHp)
     self.isStructure = false
     self.isWallOrBoat = false
     self.isRider = false
+    self.isVisibleBySettings = true
+    self.showOnlyInCombat = false
+    -- for showOnlyInCombat mode
+    self.isAttacking = false
+    self.attackersNum = 0
+    self.isRided = false
+    self.hideHpTimeout = 1
+    self.LastCombatActionTs = 0
+    --
     self.boxBg = self:AddChild(NineSlice("images/hp_bg.xml"))
     self.boxBg:SetSize(self.hpBarSizeX - BOX_BG_PADDING, self.hpBarSizeY - BOX_BG_PADDING)
     self.box = self:AddChild(NineSlice("images/hp_white.xml"))
@@ -89,8 +99,10 @@ local HiHpWidget = Class(HiBaseWidget, function(self, hp, maxHp)
     self:UpdateWhilePaused(false)
 end)
 
-function HiHpWidget:SetRider(newIsRider)
-    self.isRider = newIsRider
+function HiHpWidget:UpdateCombatAction()
+    if self.isAttacking or self.attackersNum > 0 or self.isRided then
+        self.LastCombatActionTs = GetTime()
+    end
 end
 
 function HiHpWidget:GetOffset()
@@ -122,6 +134,10 @@ end
 
 function HiHpWidget:UpdateHp(hp, maxHp, force)
     if hp ~= self.hp or maxHp ~= self.maxHp or force then
+        -- Don't update this if it is health initialization
+        if self.maxHp ~= 0 then
+            self.LastCombatActionTs = GetTime()
+        end
         self.hp = hp
         self.maxHp = maxHp
         local resultString = tostring(math.floor(self.hp))
@@ -148,6 +164,8 @@ function HiHpWidget:UpdateState(force)
     local state = GetHpWidgetState(self.target)
     if state ~= self.state or force then
         self.state = state
+        self.isVisibleBySettings = self:GetVisibilityBySettings()
+        self.showOnlyInCombat = HI_SETTINGS:GetOtherOption(SHOW_ONLY_IN_COMBAT)
         self:SetImageTint(HI_SETTINGS:GetColour(self.state))
     end
 end
@@ -159,7 +177,7 @@ function HiHpWidget:ApplySettings()
     self:UpdateHp(self.hp, self.maxHp, true)
 end
 
-function HiHpWidget:IsVisibleBySettings()
+function HiHpWidget:GetVisibilityBySettings()
     if self.state == STATE_PLAYER then
         if self.target == ThePlayer then
             return HI_SETTINGS:GetVisibility(VISIBILITY_INDEX_ME)
@@ -187,21 +205,33 @@ function HiHpWidget:IsVisibleByLogic()
     if self.target == nil then
         return false
     end
-    local canSee = CanEntitySeeTarget(ThePlayer, self.target)
-    return canSee
+    -- if player shouldn't see target (i.e. target is in shadow)
+    if not CanEntitySeeTarget(ThePlayer, self.target) then
+        return false
+    end
+    -- always show players, friends and enemies
+    if self.state ~= STATE_NEUTRAL then
+        return true
+    end
+    -- if out of combat
+    if self.showOnlyInCombat and self.LastCombatActionTs + 2 < GetTime() then
+        return false
+    end
+    return true
 end
 
 function HiHpWidget:OnUpdate(dt)
-    local isVisible = self:IsVisibleBySettings() and self:IsVisibleByLogic()
+    self:UpdateCombatAction()
+    local isVisible = self.isVisibleBySettings and self:IsVisibleByLogic()
 
     -- separating hiding and showing should prevent flickering on left bottom corner of the screen
     if not isVisible then
         self:Hide()
+        return
     end
 
-    self._base.OnUpdate(self, dt)
-
     if isVisible then
+        self._base.OnUpdate(self, dt)
         self:Show()
     end
 end

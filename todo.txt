@@ -10,12 +10,12 @@ TASKS
 +DONE - add separate mark for neutrals and enemies
 +DONE - add possibility to configure mod using controller
 +DONE - add option to show max hp
++DONE - add option to hide hp bars out of combat
++DONE - somehow highlight enemy that is going to target players
 - add color (and probably icon) to different damage types (pack damage in chunks by type to save brandwidth)
 - show somehow resistance, armor or affinity (that you deal less or more damage) (TOO HARD)
 - show damage on hp bar with temp indicator and animation
 - probably floor player HP and ceil all other's
-- somehow highlight enemy that is going to target players
-!- add option to hide hp bars out of combat
 !- add configurable size of HP bar
 !- add option to show hp above entities (TOO HARD)
 
@@ -30,5 +30,6 @@ BUGS
 +FIXED - rabbits' and moles' hp bars are displayed, if they are in holes, after world is loaded, if playing on mastersim
 - heal indicator appears when hp bar is created (entity recieves initial hp diff)
 !- hp of captured creatures in inventory is shown and collides with player's hp
-!- antlion has no HP when enraged
++FIXED - antlion has no HP when enraged
++FIXED - Willow's bear has no HP when enraged?
 !- widgets appear on left bottom corner if playing on mastersim

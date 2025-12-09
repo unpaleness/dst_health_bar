@@ -17,8 +17,8 @@ local DEFAULT_SETTINGS = {
     colours = {7, 2, 1, 5},
     -- current player, other players, bosses, structures, other entities, all other normally hidden entities (walls, boats), enemies, friends
     visibilities = {true, true, true, true, true, false, true, true},
-    -- show max hp
-    others = {false},
+    -- show max hp, show only in battle
+    others = {false, true},
 }
 
 local HiSettings = {
@@ -75,6 +75,7 @@ end
 function HiSettings:SetVisibility(type, visibility)
     local verified_type = math.clamp(type, 1, #self.data.visibilities)
     self.data.visibilities[verified_type] = visibility
+    self:UpdateWidgets()
 end
 
 function HiSettings:GetVisibility(type)

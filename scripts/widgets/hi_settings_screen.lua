@@ -54,6 +54,7 @@ local VISIBILITY_CHECKBOXES_DATA = {
 
 local OTHER_CHECKBOXES_DATA = {
     { text = "Show max health", offset_y = PADDING_VERTICAL_BIG },
+    { text = "Show only in battle", offset_y = PADDING_VERTICAL_SMALL },
 }
 
 local function MakeColourOptions()

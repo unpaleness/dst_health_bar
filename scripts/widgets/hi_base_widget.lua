@@ -36,9 +36,6 @@ end
 
 function HiBaseWidget:OnUpdate(dt)
     local pos = GetPosition(self.target)
-    -- if self.target.prefab == "frog" then
-    --     print("HiBaseWidget:OnUpdate", self.target, pos or "<nil>")
-    -- end
     if pos ~= nil then
         self:SetPosition(pos + self:GetOffset())
     end
