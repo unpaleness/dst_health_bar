@@ -102,7 +102,7 @@ local function HiClientOnCombatTargetDirty(inst)
 	if hpWidget ~= nil then
 		hpWidget:UpdateState()
         local targetGuid = inst._hiCombatTargetGuidReplicated:value()
-        hpWidget.isAttacking = targetGuid ~= nil and targetGuid > 0
+        hpWidget.isAttacking = targetGuid ~= nil and targetGuid ~= 0
 	end
 end
 
@@ -118,7 +118,7 @@ local function HiClientOnEntityActive(inst)
     if inst == nil or not inst:IsValid() then
         return
     end
-	-- HiClientOnHealthDirty(inst)
+	HiClientOnHealthDirty(inst)
 end
 
 local function HiClientOnEntityPassive(inst)
@@ -162,12 +162,12 @@ local function HiClientOnCurrentRiderGuidDirty(inst)
     inst._hiCurrentRiderGuid = newRiderGuid
 end
 
-local function HiOnAttackersNumDirty(inst)
-    local widget = GLOBAL.HI_SETTINGS.cached_hp_widgets[inst._hiServerGuidReplicated:value()]
-    if widget ~= nil then
-        widget.attackersNum = inst._hiAttackersNumReplicated:value()
-    end
-end
+-- local function HiOnAttackersNumDirty(inst)
+--     local widget = GLOBAL.HI_SETTINGS.cached_hp_widgets[inst._hiServerGuidReplicated:value()]
+--     if widget ~= nil then
+--         widget.attackersNum = inst._hiAttackersNumReplicated:value()
+--     end
+-- end
 
 --[[
 local function HiClientOnCombinedDamageStringDirty(inst)
@@ -218,40 +218,6 @@ end
 local function HiClientOnRemove(inst)
     -- print("HiClientOnRemove", inst)
     HiClientOnEntityPassive(inst)
-end
-
--- GLOBAL.prefabsCache = {}
-
-local function HiClientShouldHaveHealth(inst)
-    -- local shouldDisable =
-    --     inst:HasTag("FX") or
-    --     inst:HasTag("item") or
-    --     false
-    local shouldEnable =
-        inst:HasTag("animal") or
-        inst:HasTag("boat") or
-        inst:HasTag("boatbumper") or
-        inst:HasTag("character") or
-        inst:HasTag("epic") or
-        inst:HasTag("insect") or
-        inst:HasTag("hostile") or
-        inst:HasTag("monster") or
-        inst:HasTag("player") or
-        inst:HasTag("smallcreature") or
-        -- inst:HasTag("structure") or
-        inst:HasTag("wall") or
-        -- works on master sim only
-        -- inst:HasTag("__health") or
-        -- inst:HasTag("_health") or
-        false
-    local hasHealth = shouldEnable
-
-    -- local prefabsCacheVal = GLOBAL.prefabsCache[inst.prefab]
-    -- if prefabsCacheVal == nil then
-    --     GLOBAL.prefabsCache[inst.prefab] = 1
-    --     print("HiClientShouldHaveHealth", inst, inst.prefab, hasHealth)
-    -- end
-    return hasHealth
 end
 
 -- Server methods
@@ -317,16 +283,16 @@ end
 
 local function HiServerProcessCombatComponent(combat)
 	local function OnChangeTarget(component, oldTarget, newTarget)
-		if oldTarget ~= newTarget then
-			-- print("ChangeTarget {", component.inst, "}: old: ", oldTarget and oldTarget or "<nil>", ", new: ", newTarget and newTarget or "<nil>")
-			component.inst._hiCombatTargetGuidReplicated:set(newTarget and newTarget._hiServerGuidReplicated:value() or 0)
-            if oldTarget ~= nil then
-                oldTarget._hiAttackersNumReplicated:set(oldTarget._hiAttackersNumReplicated:value() - 1)
-            end
-            if newTarget ~= nil then
-                newTarget._hiAttackersNumReplicated:set(newTarget._hiAttackersNumReplicated:value() + 1)
-            end
-		end
+        if oldTarget ~= newTarget then
+            -- print("ChangeTarget {", component.inst, "}: old: ", oldTarget and oldTarget or "<nil>", ", new: ", newTarget and newTarget or "<nil>")
+            component.inst._hiCombatTargetGuidReplicated:set(newTarget and newTarget._hiServerGuidReplicated:value() or 0)
+            -- if oldTarget ~= nil then
+            --     oldTarget._hiAttackersNumReplicated:set(oldTarget._hiAttackersNumReplicated:value() - 1)
+            -- end
+            -- if newTarget ~= nil then
+            --     newTarget._hiAttackersNumReplicated:set(newTarget._hiAttackersNumReplicated:value() + 1)
+            -- end
+        end
 	end
 	local OldEngageTarget = combat.EngageTarget
 	combat.EngageTarget = function(self, target)
@@ -364,7 +330,7 @@ local function InitPrefab(inst)
 	inst._hiCombatTargetGuidReplicated = GLOBAL.net_int(inst.GUID, "_hiCombatTargetGuidReplicated", "hiOnCombatTargetDirty")
 	inst._hiFollowTargetGuidReplicated = GLOBAL.net_int(inst.GUID, "_hiFollowTargetGuidReplicated", "hiOnFollowTargetDirty")
     inst._hiCurrentRiderGuidReplicated = GLOBAL.net_int(inst.GUID, "_hiCurrentRiderGuidReplicated", "hiOnCurrentRiderGuidDirty")
-    inst._hiAttackersNumReplicated = GLOBAL.net_int(inst.GUID, "_hiAttackersNumReplicated", "hiOnAttackersNumDirty")
+    -- inst._hiAttackersNumReplicated = GLOBAL.net_int(inst.GUID, "_hiAttackersNumReplicated", "hiOnAttackersNumDirty")
     -- this is a packed value+string data about damage replicated to client
     -- inst._hiCombinedDamageString = GLOBAL.net_string(inst.GUID, "_hiCombinedDamageString_replicated", "hiOnCombinedDamageStringDirty")
     if GLOBAL.TheWorld.ismastersim then
@@ -393,7 +359,7 @@ local function InitPrefab(inst)
         inst:ListenForEvent("hiOnFollowTargetDirty", HiClientOnFollowTargetDirty)
         -- inst:ListenForEvent("hiOnCombinedDamageStringDirty", HiClientOnCombinedDamageStringDirty)
         inst:ListenForEvent("hiOnCurrentRiderGuidDirty", HiClientOnCurrentRiderGuidDirty)
-        inst:ListenForEvent("hiOnAttackersNumDirty", HiOnAttackersNumDirty)
+        -- inst:ListenForEvent("hiOnAttackersNumDirty", HiOnAttackersNumDirty)
     end
 end
 

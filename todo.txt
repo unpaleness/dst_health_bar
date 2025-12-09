@@ -18,6 +18,7 @@ TASKS
 - probably floor player HP and ceil all other's
 !- add configurable size of HP bar
 !- add option to show hp above entities (TOO HARD)
+!- optimize too little damage values to save brandwidth
 
 BUGS
 
@@ -28,8 +29,9 @@ BUGS
 +FIXED - player hp collides with beefalo hp
 +FIXED - beefalo has no hp on mounted, if playing on mastersim
 +FIXED - rabbits' and moles' hp bars are displayed, if they are in holes, after world is loaded, if playing on mastersim
-- heal indicator appears when hp bar is created (entity recieves initial hp diff)
-!- hp of captured creatures in inventory is shown and collides with player's hp
 +FIXED - antlion has no HP when enraged
 +FIXED - Willow's bear has no HP when enraged?
++FIXED - when killed hp widget is stuck to screen
+- heal indicator appears when hp bar is created (entity recieves initial hp diff)
+!- hp of captured creatures in inventory is shown and collides with player's hp
 !- widgets appear on left bottom corner if playing on mastersim
