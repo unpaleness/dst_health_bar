@@ -12,13 +12,13 @@ TASKS
 +DONE - add option to show max hp
 +DONE - add option to hide hp bars out of combat
 +DONE - somehow highlight enemy that is going to target players
++DONE - optimize too little damage values to save brandwidth
 - add color (and probably icon) to different damage types (pack damage in chunks by type to save brandwidth)
 - show somehow resistance, armor or affinity (that you deal less or more damage) (TOO HARD)
 - show damage on hp bar with temp indicator and animation
 - probably floor player HP and ceil all other's
 !- add configurable size of HP bar
 !- add option to show hp above entities (TOO HARD)
-!- optimize too little damage values to save brandwidth
 
 BUGS
 
