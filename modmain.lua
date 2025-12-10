@@ -235,7 +235,12 @@ local function HiServerOnHealthDelta(inst, data)
         -- print("HiServerOnHealthDelta", inst, " have no \"health_component\" component")
         return
     end
-    inst._hiCurrentHealthReplicated:set(health_component.currenthealth)
+    local delta = health_component.currenthealth - inst._hiCachedLastHealthValue
+    -- print("HiServerOnHealthDelta", inst, health_component.currenthealth, inst._hiCachedLastHealthValue, delta)
+    if GLOBAL.math.abs(delta) >= 1 then
+        inst._hiCurrentHealthReplicated:set(health_component.currenthealth)
+        inst._hiCachedLastHealthValue = inst._hiCurrentHealthReplicated:value()
+    end
 end
 
 local function HiServerOnStartFollowing(inst, data)
@@ -350,6 +355,7 @@ local function InitPrefab(inst)
     -- inst._hiCombinedDamageString = GLOBAL.net_string(inst.GUID, "_hiCombinedDamageString_replicated", "hiOnCombinedDamageStringDirty")
     if GLOBAL.TheWorld.ismastersim then
         -- print("AddPrefabPostInitAny:", inst, ": setting up server subscriptions")
+        inst._hiCachedLastHealthValue = 0
         inst:ListenForEvent("healthdelta", HiServerOnHealthDelta)
         inst:ListenForEvent("startfollowing", HiServerOnStartFollowing)
         inst:ListenForEvent("stopfollowing", HiServerOnStopFollowing)
