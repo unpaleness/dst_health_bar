@@ -220,6 +220,22 @@ local function HiClientOnRemove(inst)
     HiClientOnEntityPassive(inst)
 end
 
+local function HiClientOnMouseOver(inst)
+    -- print("HiClientOnMouseOver", inst)
+    local widget = GLOBAL.HI_SETTINGS.cached_hp_widgets[inst._hiServerGuidReplicated:value()]
+    if widget ~= nil then
+        widget.isHovered = true
+    end
+end
+
+local function HiClientOnMouseOut(inst)
+    -- print("HiClientOnMouseOut", inst)
+    local widget = GLOBAL.HI_SETTINGS.cached_hp_widgets[inst._hiServerGuidReplicated:value()]
+    if widget ~= nil then
+        widget.isHovered = false
+    end
+end
+
 local function HiOnIsInInventoryDirty(inst)
     local widget = GLOBAL.HI_SETTINGS.cached_hp_widgets[inst._hiServerGuidReplicated:value()]
     if widget ~= nil then
@@ -375,6 +391,8 @@ local function InitPrefab(inst)
         inst:ListenForEvent("enterlimbo", HiClientOnEnterLimbo)
         inst:ListenForEvent("entitysleep", HiClientOnSleep)
         inst:ListenForEvent("onremove", HiClientOnRemove)
+        inst:ListenForEvent("mouseover", HiClientOnMouseOver)
+        inst:ListenForEvent("mouseout", HiClientOnMouseOut)
         -- HiClientOnEntityActive(inst)
         inst:ListenForEvent("hiOnCurrentHealthDirty", HiClientOnHealthDirty)
         inst:ListenForEvent("hiOnMaxHealthDirty", HiClientOnHealthDirty)

@@ -24,9 +24,9 @@ local OPACITY_OPTIONS = {
 }
 
 local OPACITY_TITLE = "Opacity"
-local COLOUR_TITLE = "Health bar colour"
-local VISIBILITIES_TITLE = "Health bar visibility"
-local OTHERS_TITLE = "Other"
+local COLOUR_TITLE = "Colour"
+local VISIBILITIES_TITLE = "Visibility"
+local OTHERS_TITLE = "Logic"
 
 local OPACITY_SPINNDERS_DATA = {
     { text = "Health number", index = 1, offset_y = PADDING_VERTICAL_BIG },
@@ -53,8 +53,29 @@ local VISIBILITY_CHECKBOXES_DATA = {
 }
 
 local OTHER_CHECKBOXES_DATA = {
-    { text = "Show max health", offset_y = PADDING_VERTICAL_BIG },
-    { text = "Show only in battle", offset_y = PADDING_VERTICAL_SMALL },
+    { text = "Max health", offset_y = PADDING_VERTICAL_BIG },
+    { text = "Only in battle", offset_y = PADDING_VERTICAL_SMALL },
+    { text = "Player out of battle", offset_y = PADDING_VERTICAL_SMALL },
+    { text = "Allies out of battle", offset_y = PADDING_VERTICAL_SMALL },
+    { text = "Show on mouse over", offset_y = PADDING_VERTICAL_SMALL },
+}
+
+local FADE_ANIMATION_TIME_TEXT = "Fade anim"
+local FADE_ANIMATION_TIME_DATA = {
+    { text = "100ms",   data = 0.1 },
+    { text = "200ms",   data = 0.2 },
+    { text = "300ms",   data = 0.3 },
+    { text = "400ms",   data = 0.4 },
+    { text = "500ms",   data = 0.5 },
+}
+
+local HIDE_OUT_OF_COMBAT_TIME_TEXT = "Hide out of combat"
+local HIDE_OUT_OF_COMBAT_TIME_DATA = {
+    { text = "0s",   data = 0 },
+    { text = "1s",   data = 1 },
+    { text = "2s",   data = 2 },
+    { text = "3s",   data = 3 },
+    { text = "4s",   data = 4 },
 }
 
 local function MakeColourOptions()
@@ -87,6 +108,8 @@ local HiSettingsScreen = Class(Screen, function(self)
 
     self.size_y = 0
     self:AddOtherCheckboxes(3)
+    self:AddFadeAnimationTimeSpinner(3)
+    self:AddHideOutOfCombatTimeSpinner(3)
     local column3_y = self.size_y
 
     self.size_y = math.max(column1_y, column2_y, column3_y)
@@ -209,6 +232,26 @@ function HiSettingsScreen:AddOtherCheckboxes(column)
         end, HI_SETTINGS:GetOtherOption(i), v.text))
         self:RegisterElement(checkbox, column, Vector3(offset_x, v.offset_y, 0))
     end
+end
+
+function HiSettingsScreen:AddFadeAnimationTimeSpinner(column)
+    local spinner = self:AddChild(TEMPLATES.LabelSpinner(FADE_ANIMATION_TIME_TEXT, FADE_ANIMATION_TIME_DATA, 400, 150, nil, nil, nil, FONT_SIZE, -75))
+    spinner.spinner:SetOnChangedFn(function(selected, old)
+        HI_SETTINGS:SetFadeAnimationTime(selected)
+    end)
+    spinner.spinner:SetSelected(HI_SETTINGS:GetFadeAnimationTime())
+    local offset_x = COLUMN_WIDTH * (column - 1 - (COLUMNS_NUM - 1) / 2)
+    self:RegisterElement(spinner, column, Vector3(offset_x, PADDING_VERTICAL_SMALL, 0))
+end
+
+function HiSettingsScreen:AddHideOutOfCombatTimeSpinner(column)
+    local spinner = self:AddChild(TEMPLATES.LabelSpinner(HIDE_OUT_OF_COMBAT_TIME_TEXT, HIDE_OUT_OF_COMBAT_TIME_DATA, 400, 150, nil, nil, nil, FONT_SIZE, -75))
+    spinner.spinner:SetOnChangedFn(function(selected, old)
+        HI_SETTINGS:SetHideOutOfCombatTime(selected)
+    end)
+    spinner.spinner:SetSelected(HI_SETTINGS:GetHideOutOfCombatTime())
+    local offset_x = COLUMN_WIDTH * (column - 1 - (COLUMNS_NUM - 1) / 2)
+    self:RegisterElement(spinner, column, Vector3(offset_x, PADDING_VERTICAL_SMALL, 0))
 end
 
 function HiSettingsScreen:RegisterElement(element, column, offset)

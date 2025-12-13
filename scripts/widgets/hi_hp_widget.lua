@@ -27,6 +27,9 @@ local VISIBILITY_INDEX_FRIEND = 8
 
 local SHOW_MAX_HP = 1
 local SHOW_ONLY_IN_COMBAT = 2
+local SHOW_PLAYERS_OUT_OF_COMBAT = 3
+local SHOW_ALLIES_OUT_OF_COMBAT = 4
+local SHOW_ON_MOUSE_OVER = 5
 
 local FONT_SIZE_MAX = 50
 local FONT_SIZE_MIN = 10
@@ -80,19 +83,24 @@ local HiHpWidget = Class(HiBaseWidget, function(self, hp, maxHp)
     self.isWallOrBoat = false
     self.isRider = false
     self.isInInventory = false
-    self.isVisibleBySettings = true
-    self.showOnlyInCombat = false
+    self.isHovered = false
     self.isToRemove = false
     -- for showOnlyInCombat mode
     self.isAttacking = false
-    self.attackersNum = 0
     self.isRided = false
-    self.hideHpTimeout = 2
-    self.LastCombatActionTs = -math.huge
+    self.LastShowHpActionTs = -math.huge
     --
     -- animation
-    self.fadeAnimTime = 0.5
     self.fadeOpacity = 0
+    --
+    -- settings
+    self.hideHpTimeout = 0
+    self.fadeAnimationTime = 0
+    self.isVisibleBySettings = true
+    self.showOnlyInCombat = false
+    self.showPlayersOutOfCombat = false
+    self.showAlliesOutOfCombat = false
+    self.showOnMouseOver = false
     --
     self.boxBg = self:AddChild(NineSlice("images/hp_bg.xml"))
     self.boxBg:SetSize(self.hpBarSizeX - BOX_BG_PADDING, self.hpBarSizeY - BOX_BG_PADDING)
@@ -105,9 +113,9 @@ local HiHpWidget = Class(HiBaseWidget, function(self, hp, maxHp)
     self:UpdateWhilePaused(false)
 end)
 
-function HiHpWidget:UpdateCombatAction()
-    if self.isAttacking or self.attackersNum > 0 or self.isRided then
-        self.LastCombatActionTs = GetTime()
+function HiHpWidget:UpdateShowHpAction()
+    if self.isAttacking or (self.isHovered and self.showOnMouseOver) then
+        self.LastShowHpActionTs = GetTime()
     end
 end
 
@@ -146,7 +154,7 @@ function HiHpWidget:UpdateHp(hp, maxHp, force)
     if hp ~= self.hp or maxHp ~= self.maxHp or force then
         -- Don't update this if it is health initialization
         if self.maxHp ~= 0 then
-            self.LastCombatActionTs = GetTime()
+            self.LastShowHpActionTs = GetTime()
         end
         self.hp = hp
         self.maxHp = maxHp
@@ -176,6 +184,11 @@ function HiHpWidget:UpdateState(force)
         self.state = state
         self.isVisibleBySettings = self:GetVisibilityBySettings()
         self.showOnlyInCombat = HI_SETTINGS:GetOtherOption(SHOW_ONLY_IN_COMBAT)
+        self.showPlayersOutOfCombat = HI_SETTINGS:GetOtherOption(SHOW_PLAYERS_OUT_OF_COMBAT)
+        self.showAlliesOutOfCombat = HI_SETTINGS:GetOtherOption(SHOW_ALLIES_OUT_OF_COMBAT)
+        self.showOnMouseOver = HI_SETTINGS:GetOtherOption(SHOW_ON_MOUSE_OVER)
+        self.hideHpTimeout = HI_SETTINGS:GetHideOutOfCombatTime()
+        self.fadeAnimationTime = HI_SETTINGS:GetFadeAnimationTime()
         self:SetImageTint(HI_SETTINGS:GetColour(self.state))
     end
 end
@@ -228,26 +241,26 @@ function HiHpWidget:IsVisibleByLogic()
     if self.isInInventory then
         return false
     end
-    -- always show players, friends and enemies
-    if self.state ~= STATE_NEUTRAL then
+    -- always show players and allies if enabled in settings
+    if ((self.state == STATE_PLAYER or self.isRided) and self.showPlayersOutOfCombat) or (self.state == STATE_FRIEND and self.showAlliesOutOfCombat) then
         return true
     end
     -- if out of combat
-    if self.showOnlyInCombat and self.LastCombatActionTs + self.hideHpTimeout < GetTime() then
+    if self.showOnlyInCombat and self.LastShowHpActionTs + self.hideHpTimeout < GetTime() then
         return false
     end
     return true
 end
 
 function HiHpWidget:OnUpdate(dt)
-    self:UpdateCombatAction()
+    self:UpdateShowHpAction()
     local isToVisible = not self.isToRemove and self.isVisibleBySettings and self:IsVisibleByLogic()
     if isToVisible and self.fadeOpacity < 1 then
-        self.fadeOpacity = math.clamp(self.fadeOpacity + dt / self.fadeAnimTime, 0, 1)
+        self.fadeOpacity = math.clamp(self.fadeOpacity + dt / self.fadeAnimationTime, 0, 1)
         self:UpdateOpacity()
     end
     if not isToVisible and self.fadeOpacity > 0 then
-        self.fadeOpacity = math.clamp(self.fadeOpacity - dt / self.fadeAnimTime, 0, 1)
+        self.fadeOpacity = math.clamp(self.fadeOpacity - dt / self.fadeAnimationTime, 0, 1)
         self:UpdateOpacity()
     end
 

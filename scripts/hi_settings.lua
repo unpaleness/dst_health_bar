@@ -17,8 +17,11 @@ local DEFAULT_SETTINGS = {
     colours = {7, 2, 1, 5},
     -- current player, other players, bosses, structures, other entities, all other normally hidden entities (walls, boats), enemies, friends
     visibilities = {true, true, true, true, true, false, true, true},
-    -- show max hp, show only in battle
-    others = {false, true},
+    -- show max hp, show only in battle, show playes out of battle, show allies out of battle, show on mouse over
+    others = {false, true, true, true, true},
+    -- fade in/out animation time seconds
+    fadeAnimationTime = 0.2,
+    hideOutOfCombatTime = 2,
 }
 
 local HiSettings = {
@@ -94,6 +97,24 @@ function HiSettings:GetOtherOption(type)
     return self.data.others[verified_type]
 end
 
+function HiSettings:SetFadeAnimationTime(value)
+    self.data.fadeAnimationTime = value
+    self:UpdateWidgets()
+end
+
+function HiSettings:GetFadeAnimationTime()
+    return self.data.fadeAnimationTime
+end
+
+function HiSettings:SetHideOutOfCombatTime(value)
+    self.data.hideOutOfCombatTime = value
+    self:UpdateWidgets()
+end
+
+function HiSettings:GetHideOutOfCombatTime()
+    return self.data.hideOutOfCombatTime
+end
+
 function HiSettings:UpdateWidgets()
     for _, widget in pairs(self.cached_hp_widgets) do
         widget:ApplySettings()
@@ -130,6 +151,12 @@ function HiSettings:Load()
             for i = 1, math.min(#self.data.others, #decoded_data.others) do
                 self.data.others[i] = decoded_data.others[i]
             end
+        end
+        if decoded_data.fadeAnimationTime ~= nil then
+            self.data.fadeAnimationTime = decoded_data.fadeAnimationTime
+        end
+        if decoded_data.hideOutOfCombatTime ~= nil then
+            self.data.hideOutOfCombatTime = decoded_data.hideOutOfCombatTime
         end
     end)
     self:UpdateWidgets()
