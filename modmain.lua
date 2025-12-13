@@ -30,8 +30,8 @@ local function HiClientTryCreateHpWidget(inst)
     if widget ~= nil then
         return
     end
-    local riderGUID = inst._hiCurrentRiderGuidReplicated:value()
-    if inst:HasTag("INLIMBO") and (riderGUID == nil or riderGUID == 0) then
+    local riderGuid = inst._hiCurrentRiderGuidReplicated:value()
+    if inst:HasTag("INLIMBO") and (riderGuid == nil or riderGuid == 0) then
         return
     end
     widget = GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiHpWidget(inst._hiCurrentHealthClient, inst._hiMaxHealthClient))
@@ -131,11 +131,10 @@ local function HiClientOnEntityPassive(inst)
 end
 
 local function HiClientOnCurrentRiderGuidDirty(inst)
-    -- print("HiClientOnCurrentRiderGuidDirty", inst)
     local oldRiderGuid = inst._hiCurrentRiderGuid
     local newRiderGuid = inst._hiCurrentRiderGuidReplicated:value()
+    -- print("HiClientOnCurrentRiderGuidDirty", inst, oldRiderGuid, newRiderGuid)
     -- we should make rideable entity widget visible while rided
-    local widgetRideable = GLOBAL.HI_SETTINGS.cached_hp_widgets[inst._hiServerGuidReplicated:value()]
     if newRiderGuid ~= 0 then
         -- This is a workaround to show hp on beefalo for master sim as it is going to LIMBO then is ridden
         HiClientOnEntityActive(inst)
@@ -144,10 +143,13 @@ local function HiClientOnCurrentRiderGuidDirty(inst)
         if widget then
             widget.isRider = true
         end
+        -- don't move it outside scope, as on mastersim if may be created only after HiClientOnEntityActive(inst)!
+        local widgetRideable = GLOBAL.HI_SETTINGS.cached_hp_widgets[inst._hiServerGuidReplicated:value()]
         if widgetRideable then
             widgetRideable.isRided = true
         end
     else
+        local widgetRideable = GLOBAL.HI_SETTINGS.cached_hp_widgets[inst._hiServerGuidReplicated:value()]
         if widgetRideable then
             widgetRideable.isRided = false
         end
@@ -291,9 +293,9 @@ end
 ]]
 
 local function HiServerOnRiderChange(inst, data)
-    -- print("HiServerOnRiderChanged", inst, data and data.newrider and data.newrider.GUID or 0)
+    -- print("HiServerOnRiderChanged", inst, data and data.newrider or nil)
     if data and data.newrider then
-        inst._hiCurrentRiderGuidReplicated:set(data.newrider.GUID)
+        inst._hiCurrentRiderGuidReplicated:set(data.newrider._hiServerGuidReplicated:value())
     else
         inst._hiCurrentRiderGuidReplicated:set(0)
     end

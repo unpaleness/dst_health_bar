@@ -20,7 +20,8 @@ local function GetFontSize(value)
     -- local clamped_value = math.min(cap_max, math.max(math.abs(value), cap_min))
     local clamped_value = math.clamp(math.abs(value), cap_min, cap_max)
     local scale = math.log(clamped_value) / math.log(cap_max) * (result_max - result_min) + result_min
-    return math.max(math.floor(FONT_SIZE_MAX * scale), FONT_SIZE_MIN)
+    local settingsScale = HI_SETTINGS:GetWidgetScale()
+    return math.max(math.floor(FONT_SIZE_MAX * scale * settingsScale), FONT_SIZE_MIN)
 end
 
 local function HiFormatFloat(value)

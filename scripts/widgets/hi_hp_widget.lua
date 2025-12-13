@@ -30,24 +30,10 @@ local SHOW_ONLY_IN_COMBAT = 2
 local SHOW_PLAYERS_OUT_OF_COMBAT = 3
 local SHOW_ALLIES_OUT_OF_COMBAT = 4
 local SHOW_ON_MOUSE_OVER = 5
+local SHOW_VEHICLE_HEALTH = 6
 
 local FONT_SIZE_MAX = 50
 local FONT_SIZE_MIN = 10
-
-local function GetScaledValues(value)
-    -- Let's say 0.25 scale will be at value <= 1 and 1 scale will be at value >= 200
-    local cap_min = 1
-    local cap_max = 20000
-    local result_min = 0.25
-    local result_max = 1
-    -- local clamped_value = math.min(cap_max, math.max(math.abs(value), cap_min))
-    local clamped_value = math.clamp(math.abs(value), cap_min, cap_max)
-    local scale = math.log(clamped_value) / math.log(cap_max) * (result_max - result_min) + result_min
-    local scale_x = math.max(math.floor(HP_SIZE_X * scale), BOX_BG_MIN_SIZE)
-    local scale_y = math.max(math.floor(HP_SIZE_Y * scale), BOX_BG_MIN_SIZE)
-    local scale_font = math.max(math.floor(FONT_SIZE_MAX * scale), FONT_SIZE_MIN)
-    return scale_x, scale_y, scale_font
-end
 
 local function GetHpWidgetState(target)
     if target == nil then
@@ -96,11 +82,13 @@ local HiHpWidget = Class(HiBaseWidget, function(self, hp, maxHp)
     -- settings
     self.hideHpTimeout = 0
     self.fadeAnimationTime = 0
+    self.widgetScale = 1
     self.isVisibleBySettings = true
     self.showOnlyInCombat = false
     self.showPlayersOutOfCombat = false
     self.showAlliesOutOfCombat = false
     self.showOnMouseOver = false
+    self.showVehicleHealth = false
     --
     self.boxBg = self:AddChild(NineSlice("images/hp_bg.xml"))
     self.boxBg:SetSize(self.hpBarSizeX - BOX_BG_PADDING, self.hpBarSizeY - BOX_BG_PADDING)
@@ -113,6 +101,21 @@ local HiHpWidget = Class(HiBaseWidget, function(self, hp, maxHp)
     self:UpdateWhilePaused(false)
 end)
 
+function HiHpWidget:GetScaledValues(value)
+    -- Let's say 0.25 scale will be at value <= 1 and 1 scale will be at value >= 200
+    local cap_min = 1
+    local cap_max = 20000
+    local result_min = 0.25
+    local result_max = 1
+    -- local clamped_value = math.min(cap_max, math.max(math.abs(value), cap_min))
+    local clamped_value = math.clamp(math.abs(value), cap_min, cap_max)
+    local scale = math.log(clamped_value) / math.log(cap_max) * (result_max - result_min) + result_min
+    local scale_x = self.widgetScale * math.max(math.floor(HP_SIZE_X * scale), BOX_BG_MIN_SIZE)
+    local scale_y = self.widgetScale * math.max(math.floor(HP_SIZE_Y * scale), BOX_BG_MIN_SIZE)
+    local scale_font = self.widgetScale * math.max(math.floor(FONT_SIZE_MAX * scale), FONT_SIZE_MIN)
+    return scale_x, scale_y, scale_font
+end
+
 function HiHpWidget:UpdateShowHpAction()
     if self.isAttacking or (self.isHovered and self.showOnMouseOver) then
         self.LastShowHpActionTs = GetTime()
@@ -122,7 +125,7 @@ end
 function HiHpWidget:GetOffset()
     local offset = self._base.GetOffset(self)
     if self.isRider then
-        offset = offset + HP_WIDGET_RIDER_OFFSET
+        offset = offset + HP_WIDGET_RIDER_OFFSET * self.widgetScale
     end
     return offset
 end
@@ -164,7 +167,7 @@ function HiHpWidget:UpdateHp(hp, maxHp, force)
         end
         self.text:SetString(resultString)
     end
-    local x, y, textSize = GetScaledValues(maxHp)
+    local x, y, textSize = self:GetScaledValues(maxHp)
     if self.hpBarSizeX ~= x or self.hpBarSizeY ~= y then
         self.hpBarSizeX = x
         self.hpBarSizeY = y
@@ -183,12 +186,6 @@ function HiHpWidget:UpdateState(force)
     if state ~= self.state or force then
         self.state = state
         self.isVisibleBySettings = self:GetVisibilityBySettings()
-        self.showOnlyInCombat = HI_SETTINGS:GetOtherOption(SHOW_ONLY_IN_COMBAT)
-        self.showPlayersOutOfCombat = HI_SETTINGS:GetOtherOption(SHOW_PLAYERS_OUT_OF_COMBAT)
-        self.showAlliesOutOfCombat = HI_SETTINGS:GetOtherOption(SHOW_ALLIES_OUT_OF_COMBAT)
-        self.showOnMouseOver = HI_SETTINGS:GetOtherOption(SHOW_ON_MOUSE_OVER)
-        self.hideHpTimeout = HI_SETTINGS:GetHideOutOfCombatTime()
-        self.fadeAnimationTime = HI_SETTINGS:GetFadeAnimationTime()
         self:SetImageTint(HI_SETTINGS:GetColour(self.state))
     end
 end
@@ -200,6 +197,14 @@ function HiHpWidget:UpdateOpacity()
 end
 
 function HiHpWidget:ApplySettings()
+    self.showOnlyInCombat = HI_SETTINGS:GetOtherOption(SHOW_ONLY_IN_COMBAT)
+    self.showPlayersOutOfCombat = HI_SETTINGS:GetOtherOption(SHOW_PLAYERS_OUT_OF_COMBAT)
+    self.showAlliesOutOfCombat = HI_SETTINGS:GetOtherOption(SHOW_ALLIES_OUT_OF_COMBAT)
+    self.showOnMouseOver = HI_SETTINGS:GetOtherOption(SHOW_ON_MOUSE_OVER)
+    self.showVehicleHealth = HI_SETTINGS:GetOtherOption(SHOW_VEHICLE_HEALTH)
+    self.hideHpTimeout = HI_SETTINGS:GetHideOutOfCombatTime()
+    self.fadeAnimationTime = HI_SETTINGS:GetFadeAnimationTime()
+    self.widgetScale = HI_SETTINGS:GetWidgetScale()
     self:UpdateOpacity()
     self:UpdateState(true)
     self:UpdateHp(self.hp, self.maxHp, true)
@@ -241,8 +246,12 @@ function HiHpWidget:IsVisibleByLogic()
     if self.isInInventory then
         return false
     end
-    -- always show players and allies if enabled in settings
-    if ((self.state == STATE_PLAYER or self.isRided) and self.showPlayersOutOfCombat) or (self.state == STATE_FRIEND and self.showAlliesOutOfCombat) then
+    -- show if entity is rided and enabled in settings
+    if self.isRided and self.showVehicleHealth then
+        return true
+    end
+    -- show players and allies if enabled in settings
+    if (self.state == STATE_PLAYER and self.showPlayersOutOfCombat) or (self.state == STATE_FRIEND and self.showAlliesOutOfCombat) then
         return true
     end
     -- if out of combat

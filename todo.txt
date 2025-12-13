@@ -14,11 +14,11 @@ TASKS
 +DONE - somehow highlight enemy that is going to target players
 +DONE - optimize too little damage values to save brandwidth
 +DONE - probably show hp temporarily on mouseover?
++DONE - add configurable size of HP bar
 - add color (and probably icon) to different damage types (pack damage in chunks by type to save brandwidth)
 - show somehow resistance, armor or affinity (that you deal less or more damage) (TOO HARD)
 - show damage on hp bar with temp indicator and animation
 - probably floor player HP and ceil all other's
-!- add configurable size of HP bar
 !- add option to show hp above entities (TOO HARD)
 
 BUGS
@@ -34,5 +34,5 @@ BUGS
 +FIXED - Willow's bear has no HP when enraged?
 +FIXED - when killed hp widget is stuck to screen
 +FIXED - hp of captured creatures in inventory is shown and collides with player's hp
++FIXED - widgets appear on left bottom corner if playing on mastersim
 - heal indicator appears when hp bar is created (entity recieves initial hp diff)
-!- widgets appear on left bottom corner if playing on mastersim
