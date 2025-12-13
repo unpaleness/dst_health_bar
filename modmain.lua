@@ -320,16 +320,7 @@ end
 
 local function HiServerProcessCombatComponent(combat)
 	local function OnChangeTarget(component, oldTarget, newTarget)
-        if oldTarget ~= newTarget then
-            -- print("ChangeTarget {", component.inst, "}: old: ", oldTarget and oldTarget or "<nil>", ", new: ", newTarget and newTarget or "<nil>")
-            component.inst._hiCombatTargetGuidReplicated:set(newTarget and newTarget._hiServerGuidReplicated:value() or 0)
-            -- if oldTarget ~= nil then
-            --     oldTarget._hiAttackersNumReplicated:set(oldTarget._hiAttackersNumReplicated:value() - 1)
-            -- end
-            -- if newTarget ~= nil then
-            --     newTarget._hiAttackersNumReplicated:set(newTarget._hiAttackersNumReplicated:value() + 1)
-            -- end
-        end
+        component.inst._hiCombatTargetGuidReplicated:set(newTarget and newTarget._hiServerGuidReplicated:value() or 0)
 	end
 	local OldEngageTarget = combat.EngageTarget
 	combat.EngageTarget = function(self, target)
