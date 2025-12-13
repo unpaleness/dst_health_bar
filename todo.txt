@@ -36,3 +36,4 @@ BUGS
 +FIXED - hp of captured creatures in inventory is shown and collides with player's hp
 +FIXED - widgets appear on left bottom corner if playing on mastersim
 - heal indicator appears when hp bar is created (entity recieves initial hp diff)
+!- hp isn't shown for some of dropped out of inventory creatures
