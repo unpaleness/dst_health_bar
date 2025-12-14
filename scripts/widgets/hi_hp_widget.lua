@@ -139,7 +139,7 @@ function HiHpWidget:SetTarget(target)
     self.isStructure = target:HasTag("structure")
     self.isWallOrBoat = target:HasTag("boat") or target:HasTag("boatbumper") or target:HasTag("wall")
     self._base.SetTarget(self, target)
-    self:UpdateState(true)
+    self:UpdateState()
 end
 
 function HiHpWidget:InitRemoving()
@@ -181,13 +181,13 @@ function HiHpWidget:UpdateHp(hp, maxHp, force)
     self.box:SetSize(hpBarFillerSizeX, self.hpBarSizeY - BOX_INNER_PADDING)
 end
 
-function HiHpWidget:UpdateState(force)
-    local state = GetHpWidgetState(self.target)
-    if state ~= self.state or force then
-        self.state = state
-        self.isVisibleBySettings = self:GetVisibilityBySettings()
-        self:SetImageTint(HI_SETTINGS:GetColour(self.state))
-    end
+function HiHpWidget:UpdateState()
+    local combatTargetGuid = self.target ~= nil and self.target._hiCombatTargetGuidReplicated:value() or 0
+    self.isAttacking = combatTargetGuid ~= 0
+
+    self.state = GetHpWidgetState(self.target)
+    self.isVisibleBySettings = self:GetVisibilityBySettings()
+    self:SetImageTint(HI_SETTINGS:GetColour(self.state))
 end
 
 function HiHpWidget:UpdateOpacity()
@@ -206,7 +206,7 @@ function HiHpWidget:ApplySettings()
     self.fadeAnimationTime = HI_SETTINGS:GetFadeAnimationTime()
     self.widgetScale = HI_SETTINGS:GetWidgetScale()
     self:UpdateOpacity()
-    self:UpdateState(true)
+    self:UpdateState()
     self:UpdateHp(self.hp, self.maxHp, true)
 end
 

@@ -19,27 +19,38 @@ end
 -- Client methods
 
 local function HiClientTryCreateHpWidget(inst)
-    -- print("HiClientTryCreateHpWidget", inst)
+    -- print("HiClientTryCreateHpWidget", inst, inst._hiServerGuidReplicated:value())
+    local serverGuid = inst._hiServerGuidReplicated:value()
     if GLOBAL.TheNet:IsDedicated() or GLOBAL.ThePlayer == nil then
-        return
+        -- print("HiClientTryCreateHpWidget", inst, serverGuid, "is dedic or player is invalid")
+        return nil
     end
-	if inst:IsAsleep() then
-		return
-	end
     local widget = inst._hiHpWidget
     if widget ~= nil then
-        return
+        -- print("HiClientTryCreateHpWidget", inst, serverGuid, "widget exists, return it")
+        return widget
+    end
+	if inst:IsAsleep() then
+        -- print("HiClientTryCreateHpWidget", inst, serverGuid, "entity is asleep")
+		return nil
+	end
+    if inst._hiCurrentHealth <= 0 or inst._hiMaxHealth <= 0 then
+        -- print("HiClientTryCreateHpWidget", inst, serverGuid, "client hp is not initialized yet")
+        return nil
     end
     local riderGuid = inst._hiCurrentRiderGuidReplicated:value()
     if inst:HasTag("INLIMBO") and (riderGuid == nil or riderGuid == 0) then
-        return
+        -- print("HiClientTryCreateHpWidget", inst, serverGuid, "is in limbo and doesn't have rider")
+        return nil
     end
-    widget = GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiHpWidget(inst._hiCurrentHealthClient, inst._hiMaxHealthClient))
+    widget = GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiHpWidget(inst._hiCurrentHealth, inst._hiMaxHealth))
     widget:SetTarget(inst)
     inst._hiHpWidget = widget
-    GLOBAL.HI_SETTINGS.cached_hp_widgets[inst._hiServerGuidReplicated:value()] = widget
+    GLOBAL.HI_SETTINGS.cached_hp_widgets[serverGuid] = widget
     GLOBAL.HI_SETTINGS.cached_hp_widgets_num = GLOBAL.HI_SETTINGS.cached_hp_widgets_num + 1
     -- print("HiClientTryCreateHpWidget", inst, ", cached widgets: ", GLOBAL.HI_SETTINGS.cached_hp_widgets_num)
+    -- print("HiClientTryCreateHpWidget", inst, serverGuid, "everything's good, return newly created widget")
+    return widget
 end
 
 local function HiClientTryRemoveHpWidget(inst)
@@ -60,56 +71,60 @@ local function HiClientTryRemoveHpWidget(inst)
     -- print("HiClientTryRemoveHpWidget", inst, ", cached widgets: ", GLOBAL.HI_SETTINGS.cached_hp_widgets_num)
 end
 
-local function HiClientTryUpdateHpWidget(inst)
+local function HiClientTryUpdateHpWidgetHp(inst)
     local widget = inst._hiHpWidget
     if widget == nil then
         return
     end
-    widget:UpdateHp(inst._hiCurrentHealthClient, inst._hiMaxHealthClient)
+    widget:UpdateHp(inst._hiCurrentHealth, inst._hiMaxHealth)
 end
 
 local function HiClientTrySpawnDamageWidget(inst)
-    if GLOBAL.TheNet:IsDedicated() or GLOBAL.ThePlayer == nil or inst._hiCurrentHealthClient == nil or not GLOBAL.CanEntitySeeTarget(GLOBAL.ThePlayer, inst) then
+    if GLOBAL.TheNet:IsDedicated() or GLOBAL.ThePlayer == nil or inst._hiCurrentHealth <= 0 or not GLOBAL.CanEntitySeeTarget(GLOBAL.ThePlayer, inst) then
         -- print("HiClientTrySpawnDamageWidget cannot spawn damage indicator for", inst)
         return
     end
-    local damage_widget = GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiDamageWidget(inst._hiCurrentHealthReplicated:value() - inst._hiCurrentHealthClient))
+    local damage_widget = GLOBAL.ThePlayer.HUD.overlayroot:AddChild(HiDamageWidget(inst._hiCurrentHealthReplicated:value() - inst._hiCurrentHealth))
     damage_widget:SetTarget(inst)
 end
 
 local function HiClientOnHealthDirty(inst)
     local healthValue = inst._hiCurrentHealthReplicated:value()
     local maxHealthValue = inst._hiMaxHealthReplicated:value()
-    local healthValueClient = inst._hiCurrentHealthClient or 0
-	local maxHealthValueClient = inst._hiMaxHealthClient or 0
+    local healthValueClient = inst._hiCurrentHealth
+	local maxHealthValueClient = inst._hiMaxHealth
     -- print("HiClientOnHealthDirty:", inst, ":", healthValueClient, " -> ", healthValue, " / ", maxHealthValueClient, " -> ", maxHealthValue)
-	if inst._hiCurrentHealthClient ~= nil and healthValue ~= healthValueClient then
+	if inst._hiCurrentHealth ~= 0 and healthValue ~= healthValueClient then
     	HiClientTrySpawnDamageWidget(inst)
 	end
-    inst._hiCurrentHealthClient = healthValue
-	inst._hiMaxHealthClient = maxHealthValue
+    inst._hiCurrentHealth = healthValue
+	inst._hiMaxHealth = maxHealthValue
     if healthValue > 0 and maxHealthValue > 0 then
         HiClientTryCreateHpWidget(inst)
     end
-    HiClientTryUpdateHpWidget(inst)
+    HiClientTryUpdateHpWidgetHp(inst)
     if healthValue <= 0  or maxHealthValue <= 0 then
         HiClientTryRemoveHpWidget(inst)
     end
 end
 
 local function HiClientOnCombatTargetDirty(inst)
-	local hpWidget = inst._hiHpWidget
+    -- print("HiClientOnCombatTargetDirty", inst)
+	local hpWidget = HiClientTryCreateHpWidget(inst)
 	if hpWidget ~= nil then
 		hpWidget:UpdateState()
-        local targetGuid = inst._hiCombatTargetGuidReplicated:value()
-        hpWidget.isAttacking = targetGuid ~= nil and targetGuid ~= 0
+    else
+        -- print("HiClientOnCombatTargetDirty", inst, "invalid widget!")
 	end
 end
 
 local function HiClientOnFollowTargetDirty(inst)
-	local hpWidget = inst._hiHpWidget
+    -- print("HiClientOnFollowTargetDirty", inst)
+	local hpWidget = HiClientTryCreateHpWidget(inst)
 	if hpWidget ~= nil then
 		hpWidget:UpdateState()
+    else
+        -- print("HiClientOnFollowTargetDirty", inst, "invalid widget!")
 	end
 end
 
@@ -126,7 +141,6 @@ local function HiClientOnEntityPassive(inst)
     if inst == nil or not inst:IsValid() then
         return
     end
-    inst._hiCurrentHealthClient = nil
     HiClientTryRemoveHpWidget(inst)
 end
 
@@ -135,23 +149,15 @@ local function HiClientOnCurrentRiderGuidDirty(inst)
     local newRiderGuid = inst._hiCurrentRiderGuidReplicated:value()
     -- print("HiClientOnCurrentRiderGuidDirty", inst, oldRiderGuid, newRiderGuid)
     -- we should make rideable entity widget visible while rided
+    local widgetRideable = HiClientTryCreateHpWidget(inst)
+    if widgetRideable then
+        widgetRideable.isRided = newRiderGuid ~= 0
+    end
     if newRiderGuid ~= 0 then
-        -- This is a workaround to show hp on beefalo for master sim as it is going to LIMBO then is ridden
-        HiClientOnEntityActive(inst)
         local widget = GLOBAL.HI_SETTINGS.cached_hp_widgets[newRiderGuid]
         -- we adjust hp bar of the new rider to exclude collision with a rideable entity
         if widget then
             widget.isRider = true
-        end
-        -- don't move it outside scope, as on mastersim if may be created only after HiClientOnEntityActive(inst)!
-        local widgetRideable = GLOBAL.HI_SETTINGS.cached_hp_widgets[inst._hiServerGuidReplicated:value()]
-        if widgetRideable then
-            widgetRideable.isRided = true
-        end
-    else
-        local widgetRideable = GLOBAL.HI_SETTINGS.cached_hp_widgets[inst._hiServerGuidReplicated:value()]
-        if widgetRideable then
-            widgetRideable.isRided = false
         end
     end
     if oldRiderGuid ~= 0 then
@@ -224,7 +230,7 @@ end
 
 local function HiClientOnMouseOver(inst)
     -- print("HiClientOnMouseOver", inst)
-    local widget = GLOBAL.HI_SETTINGS.cached_hp_widgets[inst._hiServerGuidReplicated:value()]
+    local widget = HiClientTryCreateHpWidget(inst)
     if widget ~= nil then
         widget.isHovered = true
     end
@@ -232,14 +238,14 @@ end
 
 local function HiClientOnMouseOut(inst)
     -- print("HiClientOnMouseOut", inst)
-    local widget = GLOBAL.HI_SETTINGS.cached_hp_widgets[inst._hiServerGuidReplicated:value()]
+    local widget = HiClientTryCreateHpWidget(inst)
     if widget ~= nil then
         widget.isHovered = false
     end
 end
 
 local function HiOnIsInInventoryDirty(inst)
-    local widget = GLOBAL.HI_SETTINGS.cached_hp_widgets[inst._hiServerGuidReplicated:value()]
+    local widget = HiClientTryCreateHpWidget(inst)
     if widget ~= nil then
         widget.isInInventory = inst._hiIsInInventoryReplicated:value()
     end
@@ -264,8 +270,7 @@ end
 local function HiServerOnStartFollowing(inst, data)
 	-- print("HiServerOnStartFollowing", inst, data.leader)
 	local leader = data.leader
-	local isNewTargetPlayer = leader and leader == GLOBAL.ThePlayer or false
-	inst._hiFollowTargetGuidReplicated:set(isNewTargetPlayer and leader._hiServerGuidReplicated:value() or 0)
+	inst._hiFollowTargetGuidReplicated:set(leader ~= nil and leader._hiServerGuidReplicated:value() or 0)
 end
 
 local function HiServerOnStopFollowing(inst, data)
@@ -320,6 +325,7 @@ end
 
 local function HiServerProcessCombatComponent(combat)
 	local function OnChangeTarget(component, oldTarget, newTarget)
+        -- print("OnChangeTarget (server)", component.inst, oldTarget, newTarget)
         component.inst._hiCombatTargetGuidReplicated:set(newTarget and newTarget._hiServerGuidReplicated:value() or 0)
 	end
 	local OldEngageTarget = combat.EngageTarget
@@ -376,8 +382,8 @@ local function InitPrefab(inst)
     if not GLOBAL.TheNet:IsDedicated() then
         -- print("AddPrefabPostInitAny:", inst, ": setting up client subscriptions")
         -- introduce this value as the last value stored by client to calculate health diff upon replicated health value update
-        inst._hiCurrentHealthClient = nil
-        inst._hiMaxHealthClient = nil
+        inst._hiCurrentHealth = 0
+        inst._hiMaxHealth = 0
         inst._hiCurrentRiderGuid = 0
         inst:ListenForEvent("exitlimbo", HiClientOnExitLimbo)
         inst:ListenForEvent("entitywake", HiClientOnWake)
