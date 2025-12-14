@@ -80,6 +80,7 @@ local HiHpWidget = Class(HiBaseWidget, function(self, hp, maxHp)
     self.isInInventory = false
     self.isHovered = false
     self.isToRemove = false
+    self.isGhost = false
     -- for showOnlyInCombat mode
     self.isAttacking = false
     self.isRided = false
@@ -193,6 +194,7 @@ end
 function HiHpWidget:UpdateState()
     local combatTargetGuid = self.target ~= nil and self.target._hiCombatTargetGuidReplicated:value() or 0
     self.isAttacking = combatTargetGuid ~= 0
+    self.isGhost = self.target ~= nil and self.target._hiIsGhostReplicated:value() or false
 
     self.state = GetHpWidgetState(self.target)
     self.isVisibleBySettings = self:GetVisibilityBySettings()
@@ -245,6 +247,10 @@ end
 
 function HiHpWidget:IsVisibleByLogic()
     if self.target == nil then
+        return false
+    end
+    -- don't show ghosts' hp
+    if self.isGhost then
         return false
     end
     -- if player shouldn't see target (i.e. target is in shadow)

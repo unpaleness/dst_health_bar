@@ -252,6 +252,14 @@ local function HiOnIsBeingDomesticatedDirty(inst)
     end
 end
 
+local function HiOnIsGhostDirty(inst)
+    print("HiOnIsGhostDirty", inst)
+    local widget = HiClientTryCreateHpWidget(inst)
+    if widget ~= nil then
+        widget:UpdateState()
+    end
+end
+
 -- Server methods
 
 local function HiServerOnHealthDelta(inst, data)
@@ -325,6 +333,11 @@ local function HiServerOnDomesticationChange(inst, data)
     end
 end
 
+local function HiServerOnChangeGhost(inst)
+    print("HiServerOnChangeGhost", inst, inst:HasTag("playerghost"))
+    inst._hiIsGhostReplicated:set(inst:HasTag("playerghost"))
+end
+
 local function HiServerProcessHealthComponent(health)
 	health.inst._hiCurrentHealthReplicated:set(health.currenthealth)
 	health.inst._hiMaxHealthReplicated:set(health.maxhealth)
@@ -378,6 +391,8 @@ local function InitPrefab(inst)
     inst._hiCurrentRiderGuidReplicated = GLOBAL.net_int(inst.GUID, "_hiCurrentRiderGuidReplicated", "hiOnCurrentRiderGuidDirty")
     inst._hiIsInInventoryReplicated = GLOBAL.net_bool(inst.GUID, "_hiIsInInventoryReplicated", "hiOnIsInInventoryDirty")
     inst._hiIsBeingDomesticatedReplicated = GLOBAL.net_bool(inst.GUID, "_hiIsBeingDomesticatedReplicated", "hiOnIsBeingDomesticatedDirty")
+    inst._hiIsGhostReplicated = GLOBAL.net_bool(inst.GUID, "_hiIsGhostReplicated", "hiOnIsGhostDirty")
+    inst._hiIsGhostReplicated:set(inst:HasTag("playerghost"))
     -- this is a packed value+string data about damage replicated to client
     -- inst._hiCombinedDamageString = GLOBAL.net_string(inst.GUID, "_hiCombinedDamageString_replicated", "hiOnCombinedDamageStringDirty")
     if GLOBAL.TheWorld.ismastersim then
@@ -391,6 +406,8 @@ local function InitPrefab(inst)
         inst:ListenForEvent("onputininventory", HiServerOnInInventoryChange)
         inst:ListenForEvent("ondropped", HiServerOnInInventoryChange)
         inst:ListenForEvent("domesticationdelta", HiServerOnDomesticationChange)
+        inst:ListenForEvent("ms_becameghost", HiServerOnChangeGhost)
+        inst:ListenForEvent("ms_respawnedfromghost", HiServerOnChangeGhost)
     end
     if not GLOBAL.TheNet:IsDedicated() then
         -- print("AddPrefabPostInitAny:", inst, ": setting up client subscriptions")
@@ -414,6 +431,7 @@ local function InitPrefab(inst)
         inst:ListenForEvent("hiOnCurrentRiderGuidDirty", HiClientOnCurrentRiderGuidDirty)
         inst:ListenForEvent("hiOnIsInInventoryDirty", HiOnIsInInventoryDirty)
         inst:ListenForEvent("hiOnIsBeingDomesticatedDirty", HiOnIsBeingDomesticatedDirty)
+        inst:ListenForEvent("hiOnIsGhostDirty", HiOnIsGhostDirty)
     end
 end
 

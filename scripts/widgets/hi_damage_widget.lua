@@ -26,7 +26,7 @@ end
 
 local function HiFormatFloat(value)
     local result = math.abs(value)
-    result = result >= 1 and result or 1
+    result = math.max(result, 0.5)
     -- if result < 1 then
     --     return math.floor(result * 1000 + 0.5) / 1000
     -- end

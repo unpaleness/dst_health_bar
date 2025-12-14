@@ -40,6 +40,6 @@ BUGS
 +FIXED - hp isn't shown if they hit each other, but damage indicators do
 +FIXED - friend state is not updated on pigs when fed
 +FIXED - hp isn't shown on beefalo sometimes (seems to be fixed as it owns tag "companion")
++FIXED - 149/150 after sleep in tent (force update if hp == maxhp)
++FIXED - hovering dead player's ghost shows some hp
 - heal indicator appears when hp bar is created (entity recieves initial hp diff)
-!- hovering dead player's ghost shows some hp
-!- 149/150 after sleep in tent (send small packets after delay?)
