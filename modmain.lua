@@ -262,7 +262,7 @@ local function HiServerOnHealthDelta(inst, data)
     end
     local delta = health_component.currenthealth - inst._hiCachedLastHealthValue
     -- print("HiServerOnHealthDelta", inst, health_component.currenthealth, inst._hiCachedLastHealthValue, delta)
-    if GLOBAL.math.abs(delta) >= 1 then
+    if GLOBAL.math.abs(delta) >= 1 or health_component.currenthealth == health_component.maxhealth then
         inst._hiCurrentHealthReplicated:set(health_component.currenthealth)
         inst._hiCachedLastHealthValue = inst._hiCurrentHealthReplicated:value()
     end

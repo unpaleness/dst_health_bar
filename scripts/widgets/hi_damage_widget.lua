@@ -26,6 +26,7 @@ end
 
 local function HiFormatFloat(value)
     local result = math.abs(value)
+    result = result >= 1 and result or 1
     -- if result < 1 then
     --     return math.floor(result * 1000 + 0.5) / 1000
     -- end
@@ -40,7 +41,7 @@ local HiDamageWidget = Class(HiBaseWidget, function(self, hp_diff, type)
     self.direction = Vector3(math.cos(random_angle), math.sin(random_angle), 0)
 
     local formatted_hp_diff = HiFormatFloat(hp_diff)
-    local hp_diff_string = formatted_hp_diff > 0 and tostring(formatted_hp_diff) or "."
+    local hp_diff_string = tostring(formatted_hp_diff)
     local value_color = COLOR_DAMAGE
     if type == "blocked" then
         value_color = COLOR_BLOCKED
