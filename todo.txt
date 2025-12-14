@@ -38,8 +38,8 @@ BUGS
 +FIXED - hp isn't shown for some of dropped out of inventory creatures
 +FIXED - hp isn't shown for bees spawned from killer bee hive (no widget exists when combat component activates)
 +FIXED - hp isn't shown if they hit each other, but damage indicators do
-+FIXED - friend state is not updated on pigs when fed (follows not the player, but the item!)
++FIXED - friend state is not updated on pigs when fed
++FIXED - hp isn't shown on beefalo sometimes (seems to be fixed as it owns tag "companion")
 - heal indicator appears when hp bar is created (entity recieves initial hp diff)
-!- hp isn't shown on beefalo sometimes
 !- hovering dead player's ghost shows some hp
 !- 149/150 after sleep in tent (send small packets after delay?)

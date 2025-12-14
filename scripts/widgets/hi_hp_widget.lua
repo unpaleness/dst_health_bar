@@ -47,8 +47,17 @@ local function GetHpWidgetState(target)
     if combatTargetGuid == playerGuid then
         return STATE_HOSTILE
     end
+    if target._hiIsBeingDomesticatedReplicated:value() then
+        -- print("GetHpWidgetState: being domesticated", target)
+        return STATE_FRIEND
+    end
+    if target:HasTag("companion") then
+        -- print("GetHpWidgetState: is companion", target)
+        return STATE_FRIEND
+    end
     local followTargetGuid = target._hiFollowTargetGuidReplicated:value()
-    if followTargetGuid == playerGuid or target:HasTag("companion") then
+    if followTargetGuid == playerGuid then
+        -- print("GetHpWidgetState: follows player", target, followTargetGuid)
         return STATE_FRIEND
     end
 

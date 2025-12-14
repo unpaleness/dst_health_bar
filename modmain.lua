@@ -119,7 +119,7 @@ local function HiClientOnCombatTargetDirty(inst)
 end
 
 local function HiClientOnFollowTargetDirty(inst)
-    -- print("HiClientOnFollowTargetDirty", inst)
+    -- print("HiClientOnFollowTargetDirty", inst, inst._hiServerGuidReplicated:value())
 	local hpWidget = HiClientTryCreateHpWidget(inst)
 	if hpWidget ~= nil then
 		hpWidget:UpdateState()
@@ -169,13 +169,6 @@ local function HiClientOnCurrentRiderGuidDirty(inst)
     end
     inst._hiCurrentRiderGuid = newRiderGuid
 end
-
--- local function HiOnAttackersNumDirty(inst)
---     local widget = GLOBAL.HI_SETTINGS.cached_hp_widgets[inst._hiServerGuidReplicated:value()]
---     if widget ~= nil then
---         widget.attackersNum = inst._hiAttackersNumReplicated:value()
---     end
--- end
 
 --[[
 local function HiClientOnCombinedDamageStringDirty(inst)
@@ -251,6 +244,14 @@ local function HiOnIsInInventoryDirty(inst)
     end
 end
 
+local function HiOnIsBeingDomesticatedDirty(inst)
+    -- print("HiOnIsBeingDomesticatedDirty", inst)
+    local widget = HiClientTryCreateHpWidget(inst)
+    if widget ~= nil then
+        widget:UpdateState()
+    end
+end
+
 -- Server methods
 
 local function HiServerOnHealthDelta(inst, data)
@@ -313,6 +314,17 @@ local function HiServerOnInInventoryChange(inst)
     end
 end
 
+local function HiServerOnDomesticationChange(inst, data)
+    if data == nil then
+        return
+    end
+    local old = data.old and data.old or 0
+    local new = data.new and data.new or 0
+    if old ~= new then
+        inst._hiIsBeingDomesticatedReplicated:set(new > 0)
+    end
+end
+
 local function HiServerProcessHealthComponent(health)
 	health.inst._hiCurrentHealthReplicated:set(health.currenthealth)
 	health.inst._hiMaxHealthReplicated:set(health.maxhealth)
@@ -365,7 +377,7 @@ local function InitPrefab(inst)
 	inst._hiFollowTargetGuidReplicated = GLOBAL.net_int(inst.GUID, "_hiFollowTargetGuidReplicated", "hiOnFollowTargetDirty")
     inst._hiCurrentRiderGuidReplicated = GLOBAL.net_int(inst.GUID, "_hiCurrentRiderGuidReplicated", "hiOnCurrentRiderGuidDirty")
     inst._hiIsInInventoryReplicated = GLOBAL.net_bool(inst.GUID, "_hiIsInInventoryReplicated", "hiOnIsInInventoryDirty")
-    -- inst._hiAttackersNumReplicated = GLOBAL.net_int(inst.GUID, "_hiAttackersNumReplicated", "hiOnAttackersNumDirty")
+    inst._hiIsBeingDomesticatedReplicated = GLOBAL.net_bool(inst.GUID, "_hiIsBeingDomesticatedReplicated", "hiOnIsBeingDomesticatedDirty")
     -- this is a packed value+string data about damage replicated to client
     -- inst._hiCombinedDamageString = GLOBAL.net_string(inst.GUID, "_hiCombinedDamageString_replicated", "hiOnCombinedDamageStringDirty")
     if GLOBAL.TheWorld.ismastersim then
@@ -378,6 +390,7 @@ local function InitPrefab(inst)
         inst:ListenForEvent("riderchanged", HiServerOnRiderChange)
         inst:ListenForEvent("onputininventory", HiServerOnInInventoryChange)
         inst:ListenForEvent("ondropped", HiServerOnInInventoryChange)
+        inst:ListenForEvent("domesticationdelta", HiServerOnDomesticationChange)
     end
     if not GLOBAL.TheNet:IsDedicated() then
         -- print("AddPrefabPostInitAny:", inst, ": setting up client subscriptions")
@@ -399,8 +412,8 @@ local function InitPrefab(inst)
         inst:ListenForEvent("hiOnFollowTargetDirty", HiClientOnFollowTargetDirty)
         -- inst:ListenForEvent("hiOnCombinedDamageStringDirty", HiClientOnCombinedDamageStringDirty)
         inst:ListenForEvent("hiOnCurrentRiderGuidDirty", HiClientOnCurrentRiderGuidDirty)
-        -- inst:ListenForEvent("hiOnAttackersNumDirty", HiOnAttackersNumDirty)
         inst:ListenForEvent("hiOnIsInInventoryDirty", HiOnIsInInventoryDirty)
+        inst:ListenForEvent("hiOnIsBeingDomesticatedDirty", HiOnIsBeingDomesticatedDirty)
     end
 end
 
@@ -418,6 +431,12 @@ AddComponentPostInit("health", function(self, inst)
     if GLOBAL.TheWorld.ismastersim then
         InitPrefab(inst)
         HiServerProcessHealthComponent(self)
+    end
+end)
+AddComponentPostInit("domesticatable", function(self, inst)
+    if GLOBAL.TheWorld.ismastersim then
+        InitPrefab(inst)
+        inst._hiIsBeingDomesticatedReplicated:set(self.domestication > 0)
     end
 end)
 
