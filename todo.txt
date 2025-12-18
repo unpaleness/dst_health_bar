@@ -34,7 +34,6 @@ BUGS
 +FIXED - Willow's bear has no HP when enraged?
 +FIXED - when killed hp widget is stuck to screen
 +FIXED - hp of captured creatures in inventory is shown and collides with player's hp
-+FIXED - widgets appear on left bottom corner if playing on mastersim
 +FIXED - hp isn't shown for some of dropped out of inventory creatures
 +FIXED - hp isn't shown for bees spawned from killer bee hive (no widget exists when combat component activates)
 +FIXED - hp isn't shown if they hit each other, but damage indicators do
@@ -43,3 +42,4 @@ BUGS
 +FIXED - 149/150 after sleep in tent (force update if hp == maxhp)
 +FIXED - hovering dead player's ghost shows some hp
 - heal indicator appears when hp bar is created (entity recieves initial hp diff)
+!- widgets appear on left bottom corner

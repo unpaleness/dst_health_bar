@@ -18,19 +18,13 @@ steam_description = [[
 [*]health bars are scaled based on max hp of target
 [*]damage indicators emit on HP change (red - damage, green - heal)
 [*]works on both local games and dedicated servers
-[*]settings (opacity and colours)
+[*]ability to show HP only in active combat
+[*]many user settings to configure behaviour
 [/list]
 
 [h3]Notes:[/h3]
 [list]
 [*]DST only
-[/list]
-
-[h3]Plans:[/h3]
-[list]
-[*]add some stuff on hp bars to improve feedback (animations of hp lost/obtained)
-[*]make damage indicators colour based on damage type (like in RPGs)
-[*]add more customization for clients
 [/list]
 
 Feel free to express any feedback. I keep source open here: https://github.com/unpaleness/dst_health_bar
