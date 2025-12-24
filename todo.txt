@@ -41,5 +41,6 @@ BUGS
 +FIXED - hp isn't shown on beefalo sometimes (seems to be fixed as it owns tag "companion")
 +FIXED - 149/150 after sleep in tent (force update if hp == maxhp)
 +FIXED - hovering dead player's ghost shows some hp
++FIXED - crash when ThePlayer is changed in game (wonkey <-> any character), widget are not cleaned up properly
 - heal indicator appears when hp bar is created (entity recieves initial hp diff)
 !- widgets appear on left bottom corner

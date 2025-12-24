@@ -65,9 +65,6 @@ local function HiClientTryRemoveHpWidget(inst)
     if widget.inst and widget.inst:IsValid() then
         widget:InitRemoving()
     end
-    inst._hiHpWidget = nil
-    GLOBAL.HI_SETTINGS.cached_hp_widgets[inst._hiServerGuidReplicated:value()] = nil
-    GLOBAL.HI_SETTINGS.cached_hp_widgets_num = GLOBAL.HI_SETTINGS.cached_hp_widgets_num - 1
     -- print("HiClientTryRemoveHpWidget", inst, ", cached widgets: ", GLOBAL.HI_SETTINGS.cached_hp_widgets_num)
 end
 
@@ -253,7 +250,7 @@ local function HiOnIsBeingDomesticatedDirty(inst)
 end
 
 local function HiOnIsGhostDirty(inst)
-    print("HiOnIsGhostDirty", inst)
+    -- print("HiOnIsGhostDirty", inst)
     local widget = HiClientTryCreateHpWidget(inst)
     if widget ~= nil then
         widget:UpdateState()
@@ -334,7 +331,7 @@ local function HiServerOnDomesticationChange(inst, data)
 end
 
 local function HiServerOnChangeGhost(inst)
-    print("HiServerOnChangeGhost", inst, inst:HasTag("playerghost"))
+    -- print("HiServerOnChangeGhost", inst, inst:HasTag("playerghost"))
     inst._hiIsGhostReplicated:set(inst:HasTag("playerghost"))
 end
 

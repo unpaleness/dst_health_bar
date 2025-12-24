@@ -157,6 +157,13 @@ function HiHpWidget:InitRemoving()
 end
 
 function HiHpWidget:Kill()
+    if self.target ~= nil then
+        self.target._hiHpWidget = nil
+        HI_SETTINGS.cached_hp_widgets[self.target._hiServerGuidReplicated:value()] = nil
+        HI_SETTINGS.cached_hp_widgets_num = HI_SETTINGS.cached_hp_widgets_num - 1
+    else
+        print("HiHpWidget:Kill: invalid target, cannot cleanup")
+    end
     self.boxBg:Kill()
     self.box:Kill()
     self.text:Kill()
