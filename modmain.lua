@@ -14,6 +14,7 @@ if not GLOBAL.TheNet:IsDedicated() then
 
     GLOBAL.HI_SETTINGS = require "hi_settings"
     GLOBAL.HI_SETTINGS:Load()
+    GLOBAL.HI_LOC = require "hi_localization"
 end
 
 -- Client methods
@@ -145,11 +146,12 @@ local function HiClientOnCurrentRiderGuidDirty(inst)
     local oldRiderGuid = inst._hiCurrentRiderGuid
     local newRiderGuid = inst._hiCurrentRiderGuidReplicated:value()
     -- print("HiClientOnCurrentRiderGuidDirty", inst, oldRiderGuid, newRiderGuid)
-    -- we should make rideable entity widget visible while rided
+    -- hack, as on mastersim beefalo goes to limbo and we need to recreate a widget for it
     local widgetRideable = HiClientTryCreateHpWidget(inst)
-    if widgetRideable then
-        widgetRideable.isRided = newRiderGuid ~= 0
+    if widgetRideable ~= nil then
+        widgetRideable:CancelRemoving()
     end
+    --
     if newRiderGuid ~= 0 then
         local widget = GLOBAL.HI_SETTINGS.cached_hp_widgets[newRiderGuid]
         -- we adjust hp bar of the new rider to exclude collision with a rideable entity
@@ -461,7 +463,7 @@ if not GLOBAL.TheNet:IsDedicated() then
     local HiSettingsScreen = require "widgets/hi_settings_screen"
 	AddSimPostInit(function()
         AddClassPostConstruct("screens/redux/pausescreen", function(self)
-            self.menu:AddItem("HI Settings", function()
+            self.menu:AddItem(GLOBAL.HI_LOC:Get("hiButtonSettings"), function()
                 GLOBAL.HI_SETTINGS:Load()
                 local settingsScreen = HiSettingsScreen()
                 self:unpause()

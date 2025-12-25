@@ -4,6 +4,7 @@ local TEMPLATES = require "widgets/redux/templates"
 
 local PADDING_VERTICAL_BIG = 75
 local PADDING_VERTICAL_SMALL = 50
+local PADDING_HORIZONTAL_CHECKBOXES = -150
 local HEIGHT = 600
 local COLUMN_WIDTH = 400
 local COLUMNS_NUM = 3
@@ -23,63 +24,54 @@ local OPACITY_OPTIONS = {
     { text = "100%", data = 1.0 },
 }
 
-local OPACITY_TITLE = "Opacity"
-local COLOUR_TITLE = "Colour"
-local VISIBILITIES_TITLE = "Visibility"
-local OTHERS_TITLE = "Logic"
-
-local OPACITY_SPINNDERS_DATA = {
-    { text = "Health number", index = 1, offset_y = PADDING_VERTICAL_BIG },
-    { text = "Health bar",    index = 2, offset_y = PADDING_VERTICAL_SMALL },
-    { text = "Damage number", index = 3, offset_y = PADDING_VERTICAL_SMALL },
+local OPACITY_SPINNERS_DATA = {
+    { locKey = "hiSpinnerOpacityHpValue", index = 1, offset_y = PADDING_VERTICAL_BIG },
+    { locKey = "hiSpinnerOpacityHpBar",    index = 2, offset_y = PADDING_VERTICAL_SMALL },
+    { locKey = "hiSpinnerOpacityDamageValue", index = 3, offset_y = PADDING_VERTICAL_SMALL },
 }
 
 local COLOUR_SPINNERS_DATA = {
-    { text = "Neutral", index = 1, offset_y = PADDING_VERTICAL_BIG },
-    { text = "Friend",  index = 2, offset_y = PADDING_VERTICAL_SMALL },
-    { text = "Hostile", index = 3, offset_y = PADDING_VERTICAL_SMALL },
-    { text = "Player",  index = 4, offset_y = PADDING_VERTICAL_SMALL },
+    { locKey = "hiSpinnerColourNeutral", index = 1, offset_y = PADDING_VERTICAL_BIG },
+    { locKey = "hiSpinnerColourAllies",  index = 2, offset_y = PADDING_VERTICAL_SMALL },
+    { locKey = "hiSpinnerColourEnemies", index = 3, offset_y = PADDING_VERTICAL_SMALL },
+    { locKey = "hiSpinnerColourPlayer",  index = 4, offset_y = PADDING_VERTICAL_SMALL },
 }
 
 local VISIBILITY_CHECKBOXES_DATA = {
-    { text = "Me", offset_y = PADDING_VERTICAL_BIG },
-    { text = "Other players", offset_y = PADDING_VERTICAL_SMALL },
-    { text = "Bosses", offset_y = PADDING_VERTICAL_SMALL },
-    { text = "Structures", offset_y = PADDING_VERTICAL_SMALL },
-    { text = "Other entities", offset_y = PADDING_VERTICAL_SMALL },
-    { text = "Walls, boats, bumpers", offset_y = PADDING_VERTICAL_SMALL },
-    { text = "Enemies", offset_y = PADDING_VERTICAL_SMALL },
-    { text = "Friends", offset_y = PADDING_VERTICAL_SMALL },
+    { locKey = "hiCheckboxVisibilityMe", offset_y = PADDING_VERTICAL_BIG },
+    { locKey = "hiCheckboxVisibilityOtherPlayers", offset_y = PADDING_VERTICAL_SMALL },
+    { locKey = "hiCheckboxVisibilityBosses", offset_y = PADDING_VERTICAL_SMALL },
+    { locKey = "hiCheckboxVisibilityStructures", offset_y = PADDING_VERTICAL_SMALL },
+    { locKey = "hiCheckboxVisibilityOtherEntities", offset_y = PADDING_VERTICAL_SMALL },
+    { locKey = "hiCheckboxVisibilityOtherStructures", offset_y = PADDING_VERTICAL_SMALL },
+    { locKey = "hiCheckboxVisibilityEnemies", offset_y = PADDING_VERTICAL_SMALL },
+    { locKey = "hiCheckboxVisibilityAllies", offset_y = PADDING_VERTICAL_SMALL },
 }
 
 local OTHER_CHECKBOXES_DATA = {
-    { text = "Max health", offset_y = PADDING_VERTICAL_BIG },
-    { text = "Only in battle", offset_y = PADDING_VERTICAL_SMALL },
-    { text = "Player out of battle", offset_y = PADDING_VERTICAL_SMALL },
-    { text = "Allies out of battle", offset_y = PADDING_VERTICAL_SMALL },
-    { text = "Show on mouse over", offset_y = PADDING_VERTICAL_SMALL },
-    { text = "Show vehicle health", offset_y = PADDING_VERTICAL_SMALL },
+    { locKey = "hiCheckboxOtherMaxHealth", offset_y = PADDING_VERTICAL_BIG },
+    { locKey = "hiCheckboxOtherOnlyInBattle", offset_y = PADDING_VERTICAL_SMALL },
+    { locKey = "hiCheckboxOtherOutOfBattlePlayers", offset_y = PADDING_VERTICAL_SMALL },
+    { locKey = "hiCheckboxOtherOutOfBattleAllies", offset_y = PADDING_VERTICAL_SMALL },
+    { locKey = "hiCheckboxOtherShowOnMouseOver", offset_y = PADDING_VERTICAL_SMALL },
 }
 
-local FADE_ANIMATION_TIME_TEXT = "Fade anim"
 local FADE_ANIMATION_TIME_DATA = {
-    { text = "100ms", data = 0.1 },
-    { text = "200ms", data = 0.2 },
-    { text = "300ms", data = 0.3 },
-    { text = "400ms", data = 0.4 },
-    { text = "500ms", data = 0.5 },
+    { text = "100" .. HI_LOC:Get("hiTitleMeasurementMillisecond"), data = 0.1 },
+    { text = "200" .. HI_LOC:Get("hiTitleMeasurementMillisecond"), data = 0.2 },
+    { text = "300" .. HI_LOC:Get("hiTitleMeasurementMillisecond"), data = 0.3 },
+    { text = "400" .. HI_LOC:Get("hiTitleMeasurementMillisecond"), data = 0.4 },
+    { text = "500" .. HI_LOC:Get("hiTitleMeasurementMillisecond"), data = 0.5 },
 }
 
-local HIDE_OUT_OF_COMBAT_TIME_TEXT = "Hide out of combat"
 local HIDE_OUT_OF_COMBAT_TIME_DATA = {
-    { text = "0s", data = 0 },
-    { text = "1s", data = 1 },
-    { text = "2s", data = 2 },
-    { text = "3s", data = 3 },
-    { text = "4s", data = 4 },
+    { text = "0" .. HI_LOC:Get("hiTitleMeasurementSecond"), data = 0 },
+    { text = "1" .. HI_LOC:Get("hiTitleMeasurementSecond"), data = 1 },
+    { text = "2" .. HI_LOC:Get("hiTitleMeasurementSecond"), data = 2 },
+    { text = "3" .. HI_LOC:Get("hiTitleMeasurementSecond"), data = 3 },
+    { text = "4" .. HI_LOC:Get("hiTitleMeasurementSecond"), data = 4 },
 }
 
-local WIDGET_SCALE_TEXT = "Scale"
 local WIDGET_SCALE_DATA = {
     { text = "50%",  data = 0.50 },
     { text = "75%",  data = 0.75 },
@@ -93,7 +85,7 @@ local WIDGET_SCALE_DATA = {
 local function MakeColourOptions()
     local options = {}
     for i, v in ipairs(HI_SETTINGS:GetAllColours()) do
-        table.insert(options, { text = v.text, data = i })
+        table.insert(options, { text = HI_LOC:Get(v.locKey), data = i })
     end
     return options
 end
@@ -131,7 +123,7 @@ local HiSettingsScreen = Class(Screen, function(self)
     self.button_close = self:AddChild(TEMPLATES.StandardButton(
         function()
             self:Close()
-        end, "Close", {150, 75}))
+        end, HI_LOC:Get("hiButtonClose"), {150, 75}))
     self:RegisterElement(self.button_close, COLUMNS_NUM + 1, Vector3(0, PADDING_VERTICAL_BIG, 0))
 
     self:FinalizeElements()
@@ -181,12 +173,12 @@ end
 
 function HiSettingsScreen:AddOpacitySpinners(column)
     -- Title opacity
-    local title = self:AddChild(Text(CHATFONT, FONT_SIZE, OPACITY_TITLE, UICOLOURS.GOLD))
+    local title = self:AddChild(Text(CHATFONT, FONT_SIZE, HI_LOC:Get("hiTitleOpacity"), UICOLOURS.GOLD))
     local offset_x = COLUMN_WIDTH * (column - 1 - (COLUMNS_NUM - 1) / 2)
     self:RegisterElement(title, COLUMNS_NUM + 1, Vector3(offset_x, 0, 0))
 
-    for i, v in ipairs(OPACITY_SPINNDERS_DATA) do
-        local spinner = self:AddChild(TEMPLATES.LabelSpinner(v.text, OPACITY_OPTIONS, 400, 150, nil, nil, nil, FONT_SIZE, -75))
+    for i, v in ipairs(OPACITY_SPINNERS_DATA) do
+        local spinner = self:AddChild(TEMPLATES.LabelSpinner(HI_LOC:Get(v.locKey), OPACITY_OPTIONS, 400, 150, nil, nil, nil, FONT_SIZE, -75))
         spinner.spinner:SetOnChangedFn(function(selected, old)
             HI_SETTINGS:SetOpacity(v.index, selected)
         end)
@@ -197,12 +189,12 @@ end
 
 function HiSettingsScreen:AddColourSpinners(column)
     -- Title colour
-    local title = self:AddChild(Text(CHATFONT, FONT_SIZE, COLOUR_TITLE, UICOLOURS.GOLD))
+    local title = self:AddChild(Text(CHATFONT, FONT_SIZE, HI_LOC:Get("hiTitleColour"), UICOLOURS.GOLD))
     local offset_x = COLUMN_WIDTH * (column - 1 - (COLUMNS_NUM - 1) / 2)
     self:RegisterElement(title, COLUMNS_NUM + 1, Vector3(offset_x, 0, 0))
 
     for i, v in ipairs(COLOUR_SPINNERS_DATA) do
-        local spinner = self:AddChild(TEMPLATES.LabelSpinner(v.text, MakeColourOptions(), 400, 150, nil, nil, nil, FONT_SIZE, -75))
+        local spinner = self:AddChild(TEMPLATES.LabelSpinner(HI_LOC:Get(v.locKey), MakeColourOptions(), 400, 150, nil, nil, nil, FONT_SIZE, -75))
         spinner.spinner:SetOnChangedFn(function(selected, old)
             HI_SETTINGS:SetColourIndex(v.index, selected)
             spinner.spinner:SetTextColour(HI_SETTINGS:GetColour(v.index))
@@ -215,7 +207,7 @@ end
 
 function HiSettingsScreen:AddVisibilityCheckboxes(column)
     -- Title visibilities
-    local title = self:AddChild(Text(CHATFONT, FONT_SIZE, VISIBILITIES_TITLE, UICOLOURS.GOLD))
+    local title = self:AddChild(Text(CHATFONT, FONT_SIZE, HI_LOC:Get("hiTitleVisibility"), UICOLOURS.GOLD))
     local offset_x = COLUMN_WIDTH * (column - 1 - (COLUMNS_NUM - 1) / 2)
     self:RegisterElement(title, COLUMNS_NUM + 1, Vector3(offset_x, 0, 0))
 
@@ -225,14 +217,14 @@ function HiSettingsScreen:AddVisibilityCheckboxes(column)
             HI_SETTINGS:SetVisibility(i, new_visibility)
             w.checked = new_visibility
             w:Refresh()
-        end, HI_SETTINGS:GetVisibility(i), v.text))
-        self:RegisterElement(checkbox, column, Vector3(offset_x, v.offset_y, 0))
+        end, HI_SETTINGS:GetVisibility(i), HI_LOC:Get(v.locKey)))
+        self:RegisterElement(checkbox, column, Vector3(offset_x + PADDING_HORIZONTAL_CHECKBOXES, v.offset_y, 0))
     end
 end
 
 function HiSettingsScreen:AddOtherCheckboxes(column)
     -- Title visibilities
-    local title = self:AddChild(Text(CHATFONT, FONT_SIZE, OTHERS_TITLE, UICOLOURS.GOLD))
+    local title = self:AddChild(Text(CHATFONT, FONT_SIZE, HI_LOC:Get("hiTitleOther"), UICOLOURS.GOLD))
     local offset_x = COLUMN_WIDTH * (column - 1 - (COLUMNS_NUM - 1) / 2)
     self:RegisterElement(title, COLUMNS_NUM + 1, Vector3(offset_x, 0, 0))
 
@@ -242,13 +234,13 @@ function HiSettingsScreen:AddOtherCheckboxes(column)
             HI_SETTINGS:SetOtherOption(i, new_value)
             w.checked = new_value
             w:Refresh()
-        end, HI_SETTINGS:GetOtherOption(i), v.text))
-        self:RegisterElement(checkbox, column, Vector3(offset_x, v.offset_y, 0))
+        end, HI_SETTINGS:GetOtherOption(i), HI_LOC:Get(v.locKey)))
+        self:RegisterElement(checkbox, column, Vector3(offset_x + PADDING_HORIZONTAL_CHECKBOXES, v.offset_y, 0))
     end
 end
 
 function HiSettingsScreen:AddFadeAnimationTimeSpinner(column)
-    local spinner = self:AddChild(TEMPLATES.LabelSpinner(FADE_ANIMATION_TIME_TEXT, FADE_ANIMATION_TIME_DATA, 400, 150, nil, nil, nil, FONT_SIZE, -75))
+    local spinner = self:AddChild(TEMPLATES.LabelSpinner(HI_LOC:Get("hiSpinnerOtherFadeAnim"), FADE_ANIMATION_TIME_DATA, 400, 150, nil, nil, nil, FONT_SIZE, -75))
     spinner.spinner:SetOnChangedFn(function(selected, old)
         HI_SETTINGS:SetFadeAnimationTime(selected)
     end)
@@ -258,7 +250,7 @@ function HiSettingsScreen:AddFadeAnimationTimeSpinner(column)
 end
 
 function HiSettingsScreen:AddHideOutOfCombatTimeSpinner(column)
-    local spinner = self:AddChild(TEMPLATES.LabelSpinner(HIDE_OUT_OF_COMBAT_TIME_TEXT, HIDE_OUT_OF_COMBAT_TIME_DATA, 400, 150, nil, nil, nil, FONT_SIZE, -75))
+    local spinner = self:AddChild(TEMPLATES.LabelSpinner(HI_LOC:Get("hiSpinnerOtherHideHpOutOfCombat"), HIDE_OUT_OF_COMBAT_TIME_DATA, 400, 150, nil, nil, nil, FONT_SIZE, -75))
     spinner.spinner:SetOnChangedFn(function(selected, old)
         HI_SETTINGS:SetHideOutOfCombatTime(selected)
     end)
@@ -268,7 +260,7 @@ function HiSettingsScreen:AddHideOutOfCombatTimeSpinner(column)
 end
 
 function HiSettingsScreen:AddWidgetScaleSpinner(column)
-    local spinner = self:AddChild(TEMPLATES.LabelSpinner(WIDGET_SCALE_TEXT, WIDGET_SCALE_DATA, 400, 150, nil, nil, nil, FONT_SIZE, -75))
+    local spinner = self:AddChild(TEMPLATES.LabelSpinner(HI_LOC:Get("hiSpinnerOtherScale"), WIDGET_SCALE_DATA, 400, 150, nil, nil, nil, FONT_SIZE, -75))
     spinner.spinner:SetOnChangedFn(function(selected, old)
         HI_SETTINGS:SetWidgetScale(selected)
     end)

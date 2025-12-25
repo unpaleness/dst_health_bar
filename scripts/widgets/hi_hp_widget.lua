@@ -1,6 +1,5 @@
 local Text = require "widgets/text"
 local HiBaseWidget = require "widgets/hi_base_widget"
-local Widget = require "widgets/widget"
 local NineSlice = require "widgets/nineslice"
 
 local HP_SIZE_X = 150
@@ -30,7 +29,6 @@ local SHOW_ONLY_IN_COMBAT = 2
 local SHOW_PLAYERS_OUT_OF_COMBAT = 3
 local SHOW_ALLIES_OUT_OF_COMBAT = 4
 local SHOW_ON_MOUSE_OVER = 5
-local SHOW_VEHICLE_HEALTH = 6
 
 local FONT_SIZE_MAX = 50
 local FONT_SIZE_MIN = 10
@@ -83,7 +81,6 @@ local HiHpWidget = Class(HiBaseWidget, function(self, hp, maxHp)
     self.isGhost = false
     -- for showOnlyInCombat mode
     self.isAttacking = false
-    self.isRided = false
     self.LastShowHpActionTs = -math.huge
     --
     -- animation
@@ -98,7 +95,6 @@ local HiHpWidget = Class(HiBaseWidget, function(self, hp, maxHp)
     self.showPlayersOutOfCombat = false
     self.showAlliesOutOfCombat = false
     self.showOnMouseOver = false
-    self.showVehicleHealth = false
     --
     self.boxBg = self:AddChild(NineSlice("images/hp_bg.xml"))
     self.boxBg:SetSize(self.hpBarSizeX - BOX_BG_PADDING, self.hpBarSizeY - BOX_BG_PADDING)
@@ -154,6 +150,10 @@ end
 
 function HiHpWidget:InitRemoving()
     self.isToRemove = true
+end
+
+function HiHpWidget:CancelRemoving()
+    self.isToRemove = false
 end
 
 function HiHpWidget:Kill()
@@ -219,7 +219,6 @@ function HiHpWidget:ApplySettings()
     self.showPlayersOutOfCombat = HI_SETTINGS:GetOtherOption(SHOW_PLAYERS_OUT_OF_COMBAT)
     self.showAlliesOutOfCombat = HI_SETTINGS:GetOtherOption(SHOW_ALLIES_OUT_OF_COMBAT)
     self.showOnMouseOver = HI_SETTINGS:GetOtherOption(SHOW_ON_MOUSE_OVER)
-    self.showVehicleHealth = HI_SETTINGS:GetOtherOption(SHOW_VEHICLE_HEALTH)
     self.hideHpTimeout = HI_SETTINGS:GetHideOutOfCombatTime()
     self.fadeAnimationTime = HI_SETTINGS:GetFadeAnimationTime()
     self.widgetScale = HI_SETTINGS:GetWidgetScale()
@@ -267,10 +266,6 @@ function HiHpWidget:IsVisibleByLogic()
     -- don't show hp bar for entities in inventory
     if self.isInInventory then
         return false
-    end
-    -- show if entity is rided and enabled in settings
-    if self.isRided and self.showVehicleHealth then
-        return true
     end
     -- show players and allies if enabled in settings
     if (self.state == STATE_PLAYER and self.showPlayersOutOfCombat) or (self.state == STATE_FRIEND and self.showAlliesOutOfCombat) then

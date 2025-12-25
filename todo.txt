@@ -15,6 +15,7 @@ TASKS
 +DONE - optimize too little damage values to save brandwidth
 +DONE - probably show hp temporarily on mouseover?
 +DONE - add configurable size of HP bar
++DONE - add translations
 - add color (and probably icon) to different damage types (pack damage in chunks by type to save brandwidth)
 - show somehow resistance, armor or affinity (that you deal less or more damage) (TOO HARD)
 - show damage on hp bar with temp indicator and animation

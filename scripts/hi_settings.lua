@@ -1,13 +1,13 @@
 local SETTINGS_FILE = "hi_settings"
 
 local COLOURS = {
-    { text = "Red",    colour = {0.75, 0.25, 0.25, 1.00} },
-    { text = "Green",  colour = {0.25, 0.75, 0.25, 1.00} },
-    { text = "Blue",   colour = {0.25, 0.25, 0.75, 1.00} },
-    { text = "Yellow", colour = {0.75, 0.75, 0.25, 1.00} },
-    { text = "Purple", colour = {0.75, 0.25, 0.75, 1.00} },
-    { text = "Cian",   colour = {0.25, 0.75, 0.75, 1.00} },
-    { text = "Grey",   colour = {0.75, 0.75, 0.75, 1.00} },
+    { locKey = "hiColourRed",    colour = {0.75, 0.25, 0.25, 1.00} },
+    { locKey = "hiColourGreen",  colour = {0.25, 0.75, 0.25, 1.00} },
+    { locKey = "hiColourBlue",   colour = {0.25, 0.25, 0.75, 1.00} },
+    { locKey = "hiColourYellow", colour = {0.75, 0.75, 0.25, 1.00} },
+    { locKey = "hiColourPurple", colour = {0.75, 0.25, 0.75, 1.00} },
+    { locKey = "hiColourCian",   colour = {0.25, 0.75, 0.75, 1.00} },
+    { locKey = "hiColourGrey",   colour = {0.75, 0.75, 0.75, 1.00} },
 }
 
 local DEFAULT_SETTINGS = {
@@ -18,7 +18,7 @@ local DEFAULT_SETTINGS = {
     -- current player, other players, bosses, structures, other entities, all other normally hidden entities (walls, boats), enemies, friends
     visibilities = {true, true, true, true, true, false, true, true},
     -- show max hp, show only in battle, show playes out of battle, show allies out of battle, show on mouse over, show vehicle hp
-    others = {false, true, true, true, true, true},
+    others = {false, true, true, true, true},
     -- fade in/out animation time seconds
     fadeAnimationTime = 0.2,
     hideOutOfCombatTime = 2,

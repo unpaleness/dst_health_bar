@@ -1,4 +1,3 @@
-local Widget = require "widgets/widget"
 local Text = require "widgets/text"
 local HiBaseWidget = require "widgets/hi_base_widget"
 
