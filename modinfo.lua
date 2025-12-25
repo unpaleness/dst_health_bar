@@ -20,6 +20,7 @@ steam_description = [[
 [*]works on both local games and dedicated servers
 [*]ability to show HP only in active combat
 [*]many user settings to configure behaviour
+[*]localization (for now only English and Russian)
 [/list]
 
 [h3]Notes:[/h3]
