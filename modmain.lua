@@ -345,6 +345,18 @@ local function HiServerProcessHealthComponent(health)
 		OldSetMaxHealth(self, amount)
 		health.inst._hiMaxHealthReplicated:set(amount)
 	end
+    local OldSetPercent = health.SetPercent
+    health.SetPercent = function(self, percent, overtime, cause)
+        OldSetPercent(self, percent, overtime, cause);
+        -- health boost circuit for WX78 is done the way that we don't know that max hp even changed, so do it here manually
+		health.inst._hiMaxHealthReplicated:set(self.maxhealth)
+    end
+    local OldOnLoad = health.OnLoad
+    health.OnLoad = function(self, data)
+        OldOnLoad(self, data);
+        -- health boost circuit for WX78 is done the way that we don't know that max hp even changed, so do it here manually
+		health.inst._hiMaxHealthReplicated:set(self.maxhealth)
+    end
 end
 
 local function HiServerProcessCombatComponent(combat)
